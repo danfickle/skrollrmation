@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html ng-app="openScrollAnimator" ng-controller="osaController">
+<head>
+ <title>Open Scroll Animator</title>
+ <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+ <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+ <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+ <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+
+ <script src="third-party/localforage.min.js"></script>
+ <script src="third-party/angular-localForage.min.js"></script>
+ <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+ <script src="third-party/sortable.js"></script>
+ <script src="third-party/angular-uuid4.js"></script>
+
+ <style>
+  div.project-header
+  {
+    position: fixed;
+    width: 2.5em;
+    height: 100%;
+    background-image: linear-gradient(to right, white, gray);
+    padding: 5px;
+    opacity: 0.7;
+  }
+
+  div.project-header h2
+  {
+    transform: rotate(90deg);
+    width: 100%;
+    white-space: nowrap;
+    transform-origin: left bottom 0;
+    font-size: 1.4em;
+  }
+
+  #controls-main
+  {
+    position:fixed;
+    top:0;
+    left: 2.5em;
+    opacity: 0.7;
+  }
+
+  a.create-item
+  {
+    font-size: 85%;
+    color: rgb(128, 10, 20);
+  }
+
+  #element-keyframe
+  {
+    overflow-x: scroll;
+    overflow-y: scroll;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 2.5em;
+    min-height: 400px;
+    white-space: nowrap;
+    opacity: 0.7;
+  }
+
+  h4.rot90
+  {
+    transform: rotate(90deg);
+    width: 100%;
+    white-space: nowrap;
+    transform-origin: left bottom 0;
+    font-size: 1.1em;
+    padding-left: 5px;
+    padding-bottom: 3px;
+  }
+
+  div.kf-data
+  {
+    display: inline-block;
+    border: 0px solid gray;
+    height: 100%;
+    margin: 0 2px 0 2px;
+    width: 2em;
+  }
+
+  h4.kf-data-expanded
+  {
+    transform: none !important;
+  }
+
+  div.kf-data-expanded
+  {
+    width: 12em !important;
+    border: 1px solid gray !important;
+  }
+
+  div.kf-data-expanded > div
+  {
+    white-space: normal;
+  }
+
+  .actual-data
+  {
+   display:table-cell;
+   padding: 5px;
+  }
+
+  .tag-cloud a
+  {
+    font-size: 85%;
+    color: rgb(128, 10, 20);
+  }
+
+  .actual-data p
+  {
+    font-size: 85%;
+    margin: 0 2px 0 0;
+  }
+ </style>
+
+
+</head>
+
+<body>
+
+<div>
+ <div class="project-header"><h2>
+  <span ng-show="currentProject">{{currentProject.name}}</span>
+  <span ng-hide="currentProject">No project open</span>
+  <span ng-show="currentScene">&gt; {{currentScene.name}}</span>
+  <span ng-show="currentElement">&gt; {{currentElement.name}}</span>
+ </h2></div>
+
+ <div id="controls-main">
+
+ <ul class="nav nav-tabs" role="tablist">
+  <li class="active"><a href="#project-menu-tab" role="tab" data-toggle="tab">Projects <span class="badge">{{osaProjects.length}}</span></a></li>
+  <li><a href="#scene-menu-tab" role="tab" data-toggle="tab">Scenes <span class="badge">{{currentProject ? osaScenes[currentProject.id].length : 0}}</a></li>
+  <li><a href="#keyframe-menu-tab" role="tab" data-toggle="tab">Keyframes <span class="badge">{{currentScene ? osaKeyframes[currentScene.id].length : 0}}</span></a></li>
+  <li><a href="#element-menu-tab" role="tab" data-toggle="tab">Elements <span class="badge">{{currentScene ? osaElements[currentScene.id].length : 0}}</span></a></li>
+  <li><a href="#render-menu-tab" role="tab" data-toggle="tab">Render</a></li>
+ </ul>
+
+ <div class="tab-content">
+  <div class="tab-pane active" id="project-menu-tab">
+
+ <div id="project-menu">
+
+  <table class="table table-condensed table-bordered table-striped">
+
+  <tbody>
+    <tr><th>Order</th><th>Name</th><th>Load</th><th>Delete</th></tr>
+  </tbody>
+
+  <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaProjects">
+   <tr ng-repeat="pject in osaProjects">
+     <td><span style="cursor:move;" class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><input type="text" ng-model="pject.name" placeholder="Project Name"></td>
+     <td><button class="btn btn-sm btn-success" ng-click="loadProject(pject)">Load</button></td>
+     <td><button class="btn btn-sm btn-danger" ng-click="deleteProject($index, pject.id)">Delete</button></td>
+   </tr>
+  </tbody>
+
+  <tbody>
+    <tr><td colspan="4"><a href="#" class="create-item" ng-click="createProject()">Create project here</a></td></tr>
+  </tbody>
+  </table>
+ </div>
+
+  </div>
+
+
+  <div class="tab-pane" id="scene-menu-tab">
+
+  <div id="scene-menu">
+
+  <table class="table table-condensed table-bordered table-striped">
+
+  <tbody>
+    <tr><th>Order</th><th>Name</th><th>Load</th><th>Delete</th></tr>
+  </tbody>
+
+  <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaScenes[currentProject.id]">
+   <tr ng-repeat="scene in osaScenes[currentProject.id]">
+     <td><span style="cursor:move;" class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><input type="text" ng-model="scene.name" placeholder="Scene Name"></td>
+     <td><button class="btn btn-sm btn-success" ng-click="loadScene(scene)">Load</button></td>
+     <td><button class="btn btn-sm btn-danger" ng-click="deleteScene($index, scene.id)">Delete</button></td>
+   </tr>
+  </tbody>
+
+  <tbody>
+    <tr ng-show="currentProject"><td colspan="4"><a href="#" class="create-item" ng-click="createScene()">Create scene here</a></td></tr>
+    <tr ng-hide="currentProject"><td colspan="4">Please load a project to view &amp; create scenes</td></tr>
+  </tbody>
+  </table>
+ </div>
+
+  </div>
+
+
+  <div class="tab-pane" id="keyframe-menu-tab">
+
+  <div id="keyframe-menu">
+
+  <table class="table table-condensed table-bordered table-striped">
+
+  <tbody>
+    <tr><th>Order</th><th>Name</th><th>Position</th><th>Delete</th></tr>
+  </tbody>
+
+  <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaKeyframes[currentScene.id]">
+   <tr ng-repeat="kf in osaKeyframes[currentScene.id]">
+     <td><span style="cursor:move;" class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><input type="text" ng-model="kf.name" placeholder="Keyframe name"></td>
+     <td><input type="text" ng-model="kf.position" placeholder="Keyframe scroll position"></td>
+     <td><button class="btn btn-sm btn-danger" ng-click="deleteKeyframe($index, kf.id)">Delete</button></td>
+   </tr>
+  </tbody>
+
+  <tbody>
+    <tr ng-show="currentScene"><td colspan="4"><a href="#" class="create-item" ng-click="createKeyframe()">Create keyframe here</a></td></tr>
+    <tr ng-hide="currentScene"><td colspan="4">Please load a scene to view &amp; create keyframes</td></tr>
+  </tbody>
+  </table>
+ </div>
+
+  </div>
+
+
+  <div class="tab-pane" id="element-menu-tab">
+
+  <div id="element-menu">
+
+  <table class="table table-condensed table-bordered table-striped">
+
+  <tbody>
+    <tr><th>Order</th><th>Name</th><th>Load</th><th>Delete</th></tr>
+  </tbody>
+
+  <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaElements[currentScene.id]">
+   <tr ng-repeat="elem in osaElements[currentScene.id]">
+     <td><span style="cursor:move;" class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><input type="text" ng-model="elem.name" placeholder="Element name"></td>
+     <td><button class="btn btn-sm btn-success" ng-click="loadElement(elem)">Load</button></td>
+     <td><button class="btn btn-sm btn-danger" ng-click="deleteElement($index, elem.id)">Delete</button></td>
+   </tr>
+  </tbody>
+
+  <tbody>
+    <tr ng-show="currentScene"><td colspan="4"><a href="#" class="create-item" ng-click="createElement()">Create element here</a></td></tr>
+    <tr ng-hide="currentScene"><td colspan="4">Please load a scene to view &amp; create elements</td></tr>
+  </tbody>
+  </table>
+ </div>
+
+  </div>
+</div>
+</div>
+
+<div id="element-keyframe" ng-show="currentElement">
+ <div class="kf-data" ng-class="osaElementKeyframeData[currentElement.id]['c'].isOpen ? kfDataClass : null">
+
+  <h4 class="rot90" ng-class="osaElementKeyframeData[currentElement.id]['c'].isOpen ? kfDataClass : null">
+    <a href="#" ng-click="createData('c')">Constants</a>
+    <span ng-click="applyStyles('c')" style="cursor:pointer;" class="glyphicon glyphicon-search"></span>
+  </h4>
+
+  <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id]['c'].isOpen">
+   <span class="tag-cloud">
+     <span ng-repeat="tag in constants">
+     <a ng-hide="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]"
+        ng-click="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name] = true"
+        href="#">{{tag.name}}</a>
+     </span>
+   </span>
+
+   <span ng-repeat="tag in constants">
+     <p ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">{{tag.placeholder}}</p>
+     <p style="white-space: nowrap;" ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">
+
+        <input style="width: 80%;"
+               type="text"
+               ng-model="osaElementKeyframeData[currentElement.id]['c'][tag.name]"
+               placeholder="{{tag.placeholder}}"
+               ng-change="applyStyles('c')">
+
+        <span style="font-size: 140%; cursor:pointer;" ng-click="incDataItem('c', tag)" ng-show="tag.inc">+</span>
+        <span style="font-size: 140%; cursor:pointer;" ng-click="decDataItem('c', tag)" ng-show="tag.inc">-</span>
+        <span style="font-size: 120%; cursor:pointer;" ng-click="destroyData('c', tag)">&times;</span>
+     </p>
+   </span>
+  </div>
+ </div>
+
+ <div class="kf-data" ng-repeat="kf in osaKeyframes[currentScene.id]" ng-class="osaElementKeyframeData[currentElement.id][kf.id].isOpen ? kfDataClass : null">
+
+  <h4 class="rot90" ng-class="osaElementKeyframeData[currentElement.id][kf.id].isOpen ? kfDataClass : null">
+    <a href="#" ng-click="createData(kf.id)">{{kf.name}} @ {{kf.position}}</a>
+    <span ng-click="applyStyles(kf.id)" style="cursor:pointer;" class="glyphicon glyphicon-search"></span>
+  </h4>
+
+  <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id][kf.id].isOpen">
+   <span class="tag-cloud">
+     <span ng-repeat="tag in tags">
+     <a ng-hide="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]"
+        ng-click="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name] = true"
+        href="#">{{tag.name}}</a>
+     </span>
+   </span>
+
+   <span ng-repeat="tag in tags">
+     <p ng-show="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]">{{tag.placeholder}}</p>
+     <p style="white-space: nowrap;" ng-show="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]">
+       <input style="width: 80%;"
+              type="text"
+              ng-model="osaElementKeyframeData[currentElement.id][kf.id][tag.name]"
+              placeholder="{{tag.placeholder}}"
+              ng-change="applyStyles(kf.id)">
+
+       <span style="font-size: 140%; cursor:pointer;" ng-click="incDataItem(kf.id, tag)" ng-show="tag.inc">+</span>
+       <span style="font-size: 140%; cursor:pointer;" ng-click="decDataItem(kf.id, tag)" ng-show="tag.inc">-</span>
+       <span style="font-size: 120%; cursor:pointer;" ng-click="destroyData(kf.id, tag)">&times;</span>
+     </p>
+   </span>
+  </div>
+ </div>
+</div>
+
+ <div id="current-scene" style="position:fixed;top:0;left:0;width: 100%;height: 100%;z-index: -1;">
+  <img ng-repeat="elem in osaElements[currentScene.id]" id="{{elem.id}}" style="position: absolute;">
+ </div>
+
+<script>
+/*
+TODO:
+1. Proper deleting of related items.
+2. Highlighting of which keyframe is being viewed.
+3. Rendering to skrollr.
+4. Saving resulting file.
+*/
+
+  var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
+
+  app.controller('osaController', ['$scope', '$localForage', 'uuid4', function($scope, $localForage, uuid4) {
+
+    $scope.osaProjects = [];
+    $scope.osaScenes = [];
+    $scope.osaKeyframes = [];
+    $scope.osaElements = [];
+    $scope.osaElementKeyframeData = [];
+
+    $scope.kfDataClass = 'kf-data-expanded';
+
+    $scope.tags = [
+      { "name" : 'top', "placeholder" : 'Top (px)', "inc" : 1, "unit" : 'px' },
+      { "name" : 'left', "placeholder" : 'Left (px)', "inc" : 1, "unit" : 'px' },
+      { "name" : 'width', "placeholder" : 'Width (px)', "inc" : 1, "unit" : 'px' },
+      { "name" : 'height', "placeholder" : 'Height (px)', "inc" : 1, "unit" : 'px' },
+      { "name" : 'opacity', "placeholder" : 'Opacity (0.0 to 1.0)', "inc" : 0.1, "unit" : '' },
+      { "name" : 'rotate', "placeholder" : 'Rotate (0 to 360)', "inc" : 1, "unit" : 'deg', "isTransform" : true },
+      { "name" : 'skewX', "placeholder" : 'Skew X (0 to 360)', "inc" : 1, "unit" : 'deg', "isTransform" : true },
+      { "name" : 'skewY', "placeholder" : 'Skew Y (0 to 360)', "inc" : 1, "unit" : 'deg', "isTransform" : true },
+    ];
+
+    $scope.constants = $scope.tags.slice();
+    $scope.constants.push( { "name" : 'src', "placeholder" : 'Image Src (url)', inc : null, "unit" : '', "isAttr" : true } );
+    $scope.constants.push( { "name" : 'alt', "placeholder" : 'Image Alt Text', inc : null, "unit" : '', "isAttr" : true } );
+
+    $scope.currentProject = null;
+    $scope.currentScene = null;
+    $scope.currentElement = null;
+
+    $localForage.bind($scope, 'osaProjects');
+
+    $scope.deleteProject = function(idx, id) {
+      if ($scope.osaProjects[idx].id === id) /* Sanity test. */
+        $scope.osaProjects.splice(idx, 1);
+    };
+
+    $scope.createProject = function() {
+      $scope.osaProjects.push({ "id" : uuid4.generate() });
+    };
+
+    $scope.loadProject = function(project) {
+      $scope.currentElement = null;
+      $scope.currentScene = null;
+      $scope.currentProject = project;
+      $scope.osaScenes[$scope.currentProject.id] = [];
+      $localForage.bind($scope, { key : 'osaScenes-' + $scope.currentProject.id, scopeKey: 'osaScenes[\'' + $scope.currentProject.id + '\']' });
+    };
+
+    $scope.createScene = function() {
+      $scope.osaScenes[$scope.currentProject.id].push({ "id" : uuid4.generate() });
+    };
+
+    $scope.deleteScene = function(idx, id) {
+      if ($scope.osaScenes[$scope.currentProject.id][idx].id === id)
+        $scope.osaScenes[$scope.currentProject.id].splice(idx, 1);
+    };
+
+    $scope.loadScene = function(scene) {
+      $scope.currentElement = null;
+      $scope.currentScene = scene;
+      $scope.osaKeyframes[$scope.currentScene.id] = [];
+      $scope.osaElements[$scope.currentScene.id] = [];
+      $localForage.bind($scope, { key : 'osaKeyframes-' + $scope.currentScene.id, scopeKey: 'osaKeyframes[\'' + $scope.currentScene.id + '\']' });
+      $localForage.bind($scope, { key : 'osaElements-' + $scope.currentScene.id, scopeKey: 'osaElements[\'' + $scope.currentScene.id + '\']' });
+
+      $localForage.getItem('osaElements-' + $scope.currentScene.id).then( function(elems) {
+        $.each(elems, function(idx, elem) {
+          $localForage.bind($scope, { key : 'osaData-' + elem.id, scopeKey: 'osaElementKeyframeData[\'' + elem.id + '\']' });
+        });
+      });
+    };
+
+    $scope.createKeyframe = function() {
+      $scope.osaKeyframes[$scope.currentScene.id].push({ "id" : uuid4.generate() });
+    };
+
+    $scope.deleteKeyframe = function(idx, id) {
+      if ($scope.osaKeyframes[$scope.currentScene.id][idx].id === id)
+        $scope.osaKeyframes[$scope.currentScene.id].splice(idx, 1);
+    };
+
+    $scope.createElement = function() {
+      var id = uuid4.generate();
+      $scope.osaElements[$scope.currentScene.id].push({ "id" : id });
+      $scope.osaElementKeyframeData[id] = {};
+    };
+
+    $scope.deleteElement = function(idx, id) {
+      if ($scope.osaElements[$scope.currentScene.id][idx].id === id)
+        $scope.osaElements[$scope.currentScene.id].splice(idx, 1);
+    };
+
+    $scope.loadElement = function(elem) {
+      $scope.currentElement = elem;
+      $localForage.bind($scope, { key : 'osaData-' + $scope.currentElement.id, scopeKey: 'osaElementKeyframeData[\'' + $scope.currentElement.id + '\']' });
+    };
+
+    $scope.createData = function(kfId) {
+     if (angular.isDefined($scope.osaElementKeyframeData[$scope.currentElement.id][kfId])) {
+         $scope.osaElementKeyframeData[$scope.currentElement.id][kfId].isOpen = !$scope.osaElementKeyframeData[$scope.currentElement.id][kfId].isOpen;
+     }
+     else {
+       $scope.osaElementKeyframeData[$scope.currentElement.id][kfId] = { "id" : uuid4.generate(), "hasData" : {}, "isOpen" : true };
+     }
+    };
+
+    $scope.incDataItem = function(kfId, tag) {
+      $scope.osaElementKeyframeData[$scope.currentElement.id][kfId][tag.name] = Math.round((parseFloat($scope.osaElementKeyframeData[$scope.currentElement.id][kfId][tag.name]) + tag.inc) * 1000) / 1000;
+      $scope.applyStyles(kfId);
+    };
+
+    $scope.decDataItem = function(kfId, tag) {
+      $scope.osaElementKeyframeData[$scope.currentElement.id][kfId][tag.name] = Math.round((parseFloat($scope.osaElementKeyframeData[$scope.currentElement.id][kfId][tag.name]) - tag.inc)  * 1000) / 1000;
+      $scope.applyStyles(kfId);
+    };
+
+    $scope.destroyData = function(kfId, tag) {
+      $scope.osaElementKeyframeData[$scope.currentElement.id][kfId].hasData[tag.name] = false;
+      $scope.applyStyles(kfId);
+    };
+
+    $scope.applyStylesInternal = function(elem, kfId, kkfId, item) {
+          var transforms = '';
+
+          if ($scope.osaElementKeyframeData[elem.id][kfId].hasData[item.name]) {
+            var key = item.name;
+            var value = $scope.osaElementKeyframeData[elem.id][kfId][item.name];
+
+            if (item.isTransform) {
+               transforms += item.name + '(' + value + item.unit + ') ';
+            }
+            else if (item.isAttr) {
+               $('#' + elem.id).attr(item.name, value);
+            }
+            else {
+               value = value + item.unit;
+               $('#' + elem.id).css(key, value);
+            }
+          }
+
+         if (transforms.length > 0)
+           $('#' + elem.id).css('transform', transforms);
+    };
+
+
+    $scope.applyStyles = function(kfId /* Which keyframe to stop at? */) {
+
+      /* First clear existing styles and attributes. */
+      $.each($scope.osaElements[$scope.currentScene.id], function(idx, elem) {
+       $.each($scope.constants, function(idx, item) {
+         if (item.isTransform)
+          $('#' + elem.id).css('transform', '');
+         else if (item.isAttr)
+          $('#' + elem.id).attr(item.name, '');
+         else
+          $('#' + elem.id).css(item.name, '');
+       });
+      });
+
+      /* Then loop through all the elements in the scene. */
+      $.each($scope.osaElements[$scope.currentScene.id], function(idx, elem) {
+
+        /* Apply the constant styles first. */
+        $.each($scope.constants, function(idx, item) {
+          $scope.applyStylesInternal(elem, 'c', 'c', item);
+        });
+
+        if (kfId != 'c')
+        {
+         /* Apply the styles for other keyframes, stopping at kfId. */
+         $.each($scope.osaKeyframes[$scope.currentScene.id], function(idx, kkf) {
+          $.each($scope.constants, function(idx, item) {
+            $scope.applyStylesInternal(elem, kkf.id, kfId, item);
+          });
+
+          if (kkf.id == kfId)
+           return false;
+         });
+        }
+      });
+    };
+  }]);
+</script>
+
+
+</body>
+</html>
+
