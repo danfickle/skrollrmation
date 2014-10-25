@@ -118,33 +118,106 @@
   {
     color: red !important;
   }
+
+  span.handle
+  {
+    cursor:move;
+  }
+
+  .nowrap-cls
+  {
+    white-space: nowrap;
+  }
+
+  .ptr-cursor
+  {
+    cursor:pointer;
+  }
+
+  .kf-data-item-cls
+  {
+    width: 80%;
+  }
+
+  .increment, .decrement, .destroy-data
+  {
+    cursor: pointer;
+    font-size: 140%;
+  }
+
+  .destroy-data
+  {
+    font-size: 110%;
+  }
+
+  #current-scene
+  {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+  #current-scene img
+  {
+    position: absolute;
+  }
  </style>
-
-
 </head>
 
 <body>
 
 <div>
- <div class="project-header"><h2>
+ <div class="project-header">
+  <h2>
   <span ng-show="currentProject">{{currentProject.name}}</span>
   <span ng-hide="currentProject">No project open</span>
   <span ng-show="currentScene">&gt; {{currentScene.name}}</span>
   <span ng-show="currentElement">&gt; {{currentElement.name}}</span>
- </h2></div>
+  </h2>
+ </div>
 
  <div id="controls-main">
 
  <ul class="nav nav-tabs" role="tablist">
-  <li class="active"><a href="#project-menu-tab" role="tab" data-toggle="tab">Projects <span class="badge">{{osaProjects.length}}</span></a></li>
-  <li><a href="#scene-menu-tab" role="tab" data-toggle="tab">Scenes <span class="badge">{{currentProject ? osaScenes[currentProject.id].length : 0}}</a></li>
-  <li><a href="#keyframe-menu-tab" role="tab" data-toggle="tab">Keyframes <span class="badge">{{currentScene ? osaKeyframes[currentScene.id].length : 0}}</span></a></li>
-  <li><a href="#element-menu-tab" role="tab" data-toggle="tab">Elements <span class="badge">{{currentScene ? osaElements[currentScene.id].length : 0}}</span></a></li>
-  <li><a href="#render-menu-tab" role="tab" data-toggle="tab">Render</a></li>
+
+  <li class="active">
+   <a href="#project-menu-tab" role="tab" data-toggle="tab">
+    Projects <span class="badge">{{osaProjects.length}}</span>
+   </a>
+  </li>
+
+  <li>
+   <a href="#scene-menu-tab" role="tab" data-toggle="tab">
+    Scenes <span class="badge">{{currentProject ? osaScenes[currentProject.id].length : 0}}
+   </a>
+  </li>
+
+  <li>
+   <a href="#keyframe-menu-tab" role="tab" data-toggle="tab">
+    Keyframes <span class="badge">{{currentScene ? osaKeyframes[currentScene.id].length : 0}}</span>
+   </a>
+  </li>
+
+  <li>
+   <a href="#element-menu-tab" role="tab" data-toggle="tab">
+    Elements <span class="badge">{{currentScene ? osaElements[currentScene.id].length : 0}}</span>
+   </a>
+  </li>
+
+  <li>
+   <a href="#render-menu-tab" role="tab" data-toggle="tab">
+    Render
+   </a>
+  </li>
+
  </ul>
 
  <div class="tab-content">
-  <div class="tab-pane active" id="project-menu-tab">
+
+ <div class="tab-pane active" id="project-menu-tab">
 
  <div id="project-menu">
 
@@ -156,7 +229,7 @@
 
   <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaProjects">
    <tr ng-repeat="pject in osaProjects">
-     <td><span style="cursor:move;" class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
      <td><input type="text" ng-model="pject.name" placeholder="Project Name"></td>
      <td><button class="btn btn-sm btn-success" ng-click="loadProject(pject)">Load</button></td>
      <td><button class="btn btn-sm btn-danger" ng-click="deleteProject($index, pject.id)">Delete</button></td>
@@ -169,8 +242,7 @@
   </table>
  </div>
 
-  </div>
-
+ </div><!-- End project menu tab -->
 
   <div class="tab-pane" id="scene-menu-tab">
 
@@ -184,7 +256,7 @@
 
   <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaScenes[currentProject.id]">
    <tr ng-repeat="scene in osaScenes[currentProject.id]">
-     <td><span style="cursor:move;" class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
      <td><input type="text" ng-model="scene.name" placeholder="Scene Name"></td>
      <td><button class="btn btn-sm btn-success" ng-click="loadScene(scene)">Load</button></td>
      <td><button class="btn btn-sm btn-danger" ng-click="deleteScene($index, scene.id)">Delete</button></td>
@@ -198,8 +270,7 @@
   </table>
  </div>
 
-  </div>
-
+  </div><!-- End scene menu tab -->
 
   <div class="tab-pane" id="keyframe-menu-tab">
 
@@ -213,7 +284,7 @@
 
   <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaKeyframes[currentScene.id]">
    <tr ng-repeat="kf in osaKeyframes[currentScene.id]">
-     <td><span style="cursor:move;" class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
      <td><input type="text" ng-model="kf.name" placeholder="Keyframe name"></td>
      <td><input type="text" ng-model="kf.position" placeholder="Keyframe scroll position"></td>
      <td><button class="btn btn-sm btn-danger" ng-click="deleteKeyframe($index, kf.id)">Delete</button></td>
@@ -227,8 +298,7 @@
   </table>
  </div>
 
-  </div>
-
+  </div><!-- End keyframe menu tab -->
 
   <div class="tab-pane" id="element-menu-tab">
 
@@ -242,7 +312,7 @@
 
   <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaElements[currentScene.id]">
    <tr ng-repeat="elem in osaElements[currentScene.id]">
-     <td><span style="cursor:move;" class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
      <td><input type="text" ng-model="elem.name" placeholder="Element name"></td>
      <td><button class="btn btn-sm btn-success" ng-click="loadElement(elem)">Load</button></td>
      <td><button class="btn btn-sm btn-danger" ng-click="deleteElement($index, elem.id)">Delete</button></td>
@@ -256,16 +326,17 @@
   </table>
  </div>
 
-  </div>
-</div>
-</div>
+  </div><!-- End element menu tab -->
+
+</div><!-- End tab content -->
+</div><!-- End controls-main -->
 
 <div id="element-keyframe" ng-show="currentElement">
  <div class="kf-data" ng-class="osaElementKeyframeData[currentElement.id]['c'].isOpen ? kfDataClass : null">
 
   <h4 class="rot90" ng-class="osaElementKeyframeData[currentElement.id]['c'].isOpen ? kfDataClass : null">
     <a href="#" ng-click="createData('c')">Constants</a>
-    <span ng-click="applyStyles('c')" ng-class="{ highlight : currentKeyframeId == 'c' }" style="cursor:pointer;" class="glyphicon glyphicon-search"></span>
+    <span ng-click="applyStyles('c')" ng-class="{ highlight : currentKeyframeId == 'c' }" class="glyphicon glyphicon-search ptr-cursor"></span>
   </h4>
 
   <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id]['c'].isOpen">
@@ -279,27 +350,27 @@
 
    <span ng-repeat="tag in constants">
      <p ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">{{tag.placeholder}}</p>
-     <p style="white-space: nowrap;" ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">
+     <p class="nowrap-cls" ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">
 
-        <input style="width: 80%;"
+        <input class="kf-data-item-cls"
                type="text"
                ng-model="osaElementKeyframeData[currentElement.id]['c'][tag.name]"
                placeholder="{{tag.placeholder}}"
                ng-change="applyStyles('c')">
 
-        <span style="font-size: 140%; cursor:pointer;" ng-click="incDataItem('c', tag)" ng-show="tag.inc">+</span>
-        <span style="font-size: 140%; cursor:pointer;" ng-click="decDataItem('c', tag)" ng-show="tag.inc">-</span>
-        <span style="font-size: 120%; cursor:pointer;" ng-click="destroyData('c', tag)">&times;</span>
+        <span class="increment" ng-click="incDataItem('c', tag)" ng-show="tag.inc">+</span>
+        <span class="decrement" ng-click="decDataItem('c', tag)" ng-show="tag.inc">-</span>
+        <span class="destroy-data" ng-click="destroyData('c', tag)">&times;</span>
      </p>
    </span>
   </div>
- </div>
+ </div><!-- End kf-data item -->
 
  <div class="kf-data" ng-repeat="kf in osaKeyframes[currentScene.id]" ng-class="osaElementKeyframeData[currentElement.id][kf.id].isOpen ? kfDataClass : null">
 
   <h4 class="rot90" ng-class="osaElementKeyframeData[currentElement.id][kf.id].isOpen ? kfDataClass : null">
     <a href="#" ng-click="createData(kf.id)">{{kf.name}} @ {{kf.position}}</a>
-    <span ng-click="applyStyles(kf.id)" ng-class="{ highlight : currentKeyframeId == kf.id }" style="cursor:pointer;" class="glyphicon glyphicon-search"></span>
+    <span ng-click="applyStyles(kf.id)" ng-class="{ highlight : currentKeyframeId == kf.id }" class="glyphicon glyphicon-search ptr-cursor"></span>
   </h4>
 
   <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id][kf.id].isOpen">
@@ -313,24 +384,24 @@
 
    <span ng-repeat="tag in tags">
      <p ng-show="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]">{{tag.placeholder}}</p>
-     <p style="white-space: nowrap;" ng-show="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]">
-       <input style="width: 80%;"
+     <p class="nowrap-cls" ng-show="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]">
+       <input class="kf-data-item-cls"
               type="text"
               ng-model="osaElementKeyframeData[currentElement.id][kf.id][tag.name]"
               placeholder="{{tag.placeholder}}"
               ng-change="applyStyles(kf.id)">
 
-       <span style="font-size: 140%; cursor:pointer;" ng-click="incDataItem(kf.id, tag)" ng-show="tag.inc">+</span>
-       <span style="font-size: 140%; cursor:pointer;" ng-click="decDataItem(kf.id, tag)" ng-show="tag.inc">-</span>
-       <span style="font-size: 120%; cursor:pointer;" ng-click="destroyData(kf.id, tag)">&times;</span>
+       <span class="increment" ng-click="incDataItem(kf.id, tag)" ng-show="tag.inc">+</span>
+       <span class="decrement" ng-click="decDataItem(kf.id, tag)" ng-show="tag.inc">-</span>
+       <span class="destroy-data" ng-click="destroyData(kf.id, tag)">&times;</span>
      </p>
    </span>
   </div>
- </div>
-</div>
+ </div><!-- End kf-data item -->
+</div><!-- End element-keyframe content -->
 
- <div id="current-scene" style="position:fixed;top:0;left:0;width: 100%;height: 100%;z-index: -1;">
-  <img ng-repeat="elem in osaElements[currentScene.id]" id="{{elem.id}}" style="position: absolute;">
+ <div id="current-scene">
+  <img ng-repeat="elem in osaElements[currentScene.id]" id="{{elem.id}}">
  </div>
 
 <script>
@@ -339,6 +410,8 @@ TODO:
 1. Proper deleting of related items.
 3. Rendering to skrollr.
 4. Saving resulting file.
+5. Split js to separate file.
+6. Testing.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
