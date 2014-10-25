@@ -332,9 +332,9 @@
 </div><!-- End controls-main -->
 
 <div id="element-keyframe" ng-show="currentElement">
- <div class="kf-data" ng-class="osaElementKeyframeData[currentElement.id]['c'].isOpen ? kfDataClass : null">
+ <div class="kf-data" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id]['c'].isOpen }">
 
-  <h4 class="rot90" ng-class="osaElementKeyframeData[currentElement.id]['c'].isOpen ? kfDataClass : null">
+  <h4 class="rot90" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id]['c'].isOpen }">
     <a href="#" ng-click="createData('c')">Constants</a>
     <span ng-click="applyStyles('c')" ng-class="{ highlight : currentKeyframeId == 'c' }" class="glyphicon glyphicon-search ptr-cursor"></span>
   </h4>
@@ -366,9 +366,9 @@
   </div>
  </div><!-- End kf-data item -->
 
- <div class="kf-data" ng-repeat="kf in osaKeyframes[currentScene.id]" ng-class="osaElementKeyframeData[currentElement.id][kf.id].isOpen ? kfDataClass : null">
+ <div class="kf-data" ng-repeat="kf in osaKeyframes[currentScene.id]" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id][kf.id].isOpen }">
 
-  <h4 class="rot90" ng-class="osaElementKeyframeData[currentElement.id][kf.id].isOpen ? kfDataClass : null">
+  <h4 class="rot90" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id][kf.id].isOpen }">
     <a href="#" ng-click="createData(kf.id)">{{kf.name}} @ {{kf.position}}</a>
     <span ng-click="applyStyles(kf.id)" ng-class="{ highlight : currentKeyframeId == kf.id }" class="glyphicon glyphicon-search ptr-cursor"></span>
   </h4>
@@ -423,8 +423,6 @@ TODO:
     $scope.osaKeyframes = [];
     $scope.osaElements = [];
     $scope.osaElementKeyframeData = [];
-
-    $scope.kfDataClass = 'kf-data-expanded';
 
     $scope.tags = [
       { "name" : 'top', "placeholder" : 'Top (px)', "inc" : 1, "unit" : 'px' },
