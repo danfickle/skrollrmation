@@ -150,7 +150,7 @@
     font-size: 110%;
   }
 
-  #current-scene
+  #current-scene, #skrollr-container
   {
     position: fixed;
     top: 0;
@@ -160,7 +160,7 @@
     z-index: -1;
   }
 
-  #current-scene img
+  #current-scene img, #skrollr-container img
   {
     position: absolute;
   }
@@ -328,6 +328,12 @@
 
   </div><!-- End element menu tab -->
 
+  <div class="tab-pane" id="render-menu-tab">
+  <div id="render-menu">
+   <button ng-click="renderSkrollr()" ng-show="currentProject" class="btn btn-primary btn-xl">Render</button>
+  </div>
+  </div><!-- End render menu tab -->
+
 </div><!-- End tab content -->
 </div><!-- End controls-main -->
 
@@ -404,6 +410,7 @@
   <img ng-repeat="elem in osaElements[currentScene.id]" id="{{elem.id}}">
  </div>
 
+ <div id="skrollr-container"></div>
 <script>
 /*
 TODO:
@@ -416,7 +423,7 @@ TODO:
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
 
-  app.controller('osaController', ['$scope', '$localForage', 'uuid4', function($scope, $localForage, uuid4) {
+  app.controller('osaController', ['$scope', '$q', '$localForage', 'uuid4', function($scope, $q, $localForage, uuid4) {
 
     $scope.osaProjects = [];
     $scope.osaScenes = [];
@@ -598,6 +605,113 @@ TODO:
            return false;
          });
         }
+      });
+    };
+
+    /* This function loads all the data into memory and then calls realRender. */
+    $scope.renderSkrollr = function() {
+
+       var scenes = [];
+
+       var promises = [];
+
+       /* First iterate over all the scenes in the project. */
+       $.each($scope.osaScenes[$scope.currentProject.id], function(idx, scene) {
+         var sceneSaved = { "id" : scene.id, "elements" : [], "keyframes" : [] };
+         scenes.push(sceneSaved);
+
+         /* Start loading the elements for the scene. */
+         var promise = $localForage.getItem('osaElements-' + scene.id).then(function(elems) {
+          $.each(elems, function(idx, elem) {
+            sceneSaved.elements.push(elem);
+          });
+         });
+
+         promises.push(promise);
+
+         /* Start loading the keyframes for the scene. */
+         var promise2 = $localForage.getItem('osaKeyframes-' + scene.id).then(function(elems) {
+          $.each(elems, function(idx, kf) {
+            sceneSaved.keyframes.push(kf);
+          });
+         });
+
+         promises.push(promise2);
+       });
+
+       $q.all(promises).then(function() {
+         var promises2 = [];
+         /* So now all the scenes, with their elements and keyframes are loaded.
+          * We then get all the element keyframe data. */
+         $.each(scenes, function(idx, scene) {
+          $.each(scene.elements, function(idx, elem) {
+           var promise3 = $localForage.getItem('osaData-' + elem.id).then(function(elemKfData) {
+             elem.kfData = elemKfData;
+           });
+           promises2.push(promise3);
+          });
+        });
+        $q.all(promises2).then(function() { $scope.realRender(scenes); });
+      });
+    };
+
+    $scope.createDataAttribute = function() {
+
+
+    };
+
+    /* Create the constant attributes and css for an img in the skrollr scene. */
+    $scope.createConstants = function(elemDiv, kfData) {
+      var transforms = '';
+
+      $.each($scope.constants, function(idx, item) {
+         if (kfData.hasData[item.name]) {
+            var key = item.name;
+            var value = kfData[item.name];
+
+            if (item.isTransform) {
+               transforms += item.name + '(' + value + item.unit + ') ';
+            }
+            else if (item.isAttr) {
+               elemDiv.attr(item.name, value);
+            }
+            else {
+               value = value + item.unit;
+               elemDiv.css(key, value);
+            }
+          }
+
+         if (transforms.length > 0)
+           elemDiv.css('transform', transforms);
+      });
+    };
+
+    $scope.realRender = function(scenes) {
+
+      var rollingScrollPosition = 0;
+
+      $.each(scenes, function(idx, scene) {
+        var sceneDiv = $('<div />');
+        var sceneStart = rollingScrollPosition;
+
+        sceneDiv.css({ "position" : 'fixed', "width" : '100%', "height" : '100%', "top" : 0, "left" : 0 });
+
+        $.each(scene.elements, function(idx, elem) {
+          var elemDiv = $('<img />');
+
+          var kfData = elem.kfData['c'];
+          $scope.createConstants(elemDiv, kfData);
+
+          $.each(scene.keyframes, function(idx, kf) {
+            var kfData = elem.kfData[kf.id];
+
+            $scope.createDataAttribute(elemDiv, kfData, kf.position);
+          });
+
+          sceneDiv.append(elemDiv);
+        });
+
+        $('#skrollr-container').append(sceneDiv);
       });
     };
   }]);
