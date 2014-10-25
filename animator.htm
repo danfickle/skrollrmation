@@ -113,6 +113,11 @@
     font-size: 85%;
     margin: 0 2px 0 0;
   }
+
+  span.highlight
+  {
+    color: red !important;
+  }
  </style>
 
 
@@ -260,7 +265,7 @@
 
   <h4 class="rot90" ng-class="osaElementKeyframeData[currentElement.id]['c'].isOpen ? kfDataClass : null">
     <a href="#" ng-click="createData('c')">Constants</a>
-    <span ng-click="applyStyles('c')" style="cursor:pointer;" class="glyphicon glyphicon-search"></span>
+    <span ng-click="applyStyles('c')" ng-class="{ highlight : currentKeyframeId == 'c' }" style="cursor:pointer;" class="glyphicon glyphicon-search"></span>
   </h4>
 
   <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id]['c'].isOpen">
@@ -294,7 +299,7 @@
 
   <h4 class="rot90" ng-class="osaElementKeyframeData[currentElement.id][kf.id].isOpen ? kfDataClass : null">
     <a href="#" ng-click="createData(kf.id)">{{kf.name}} @ {{kf.position}}</a>
-    <span ng-click="applyStyles(kf.id)" style="cursor:pointer;" class="glyphicon glyphicon-search"></span>
+    <span ng-click="applyStyles(kf.id)" ng-class="{ highlight : currentKeyframeId == kf.id }" style="cursor:pointer;" class="glyphicon glyphicon-search"></span>
   </h4>
 
   <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id][kf.id].isOpen">
@@ -332,7 +337,6 @@
 /*
 TODO:
 1. Proper deleting of related items.
-2. Highlighting of which keyframe is being viewed.
 3. Rendering to skrollr.
 4. Saving resulting file.
 */
@@ -367,6 +371,7 @@ TODO:
     $scope.currentProject = null;
     $scope.currentScene = null;
     $scope.currentElement = null;
+    $scope.currentKeyframeId = null;
 
     $localForage.bind($scope, 'osaProjects');
 
@@ -380,6 +385,7 @@ TODO:
     };
 
     $scope.loadProject = function(project) {
+      $scope.currentKeyframeId = null;
       $scope.currentElement = null;
       $scope.currentScene = null;
       $scope.currentProject = project;
@@ -397,6 +403,7 @@ TODO:
     };
 
     $scope.loadScene = function(scene) {
+      $scope.currentKeyframeId = null;
       $scope.currentElement = null;
       $scope.currentScene = scene;
       $scope.osaKeyframes[$scope.currentScene.id] = [];
@@ -485,6 +492,8 @@ TODO:
 
 
     $scope.applyStyles = function(kfId /* Which keyframe to stop at? */) {
+
+      $scope.currentKeyframeId = kfId;
 
       /* First clear existing styles and attributes. */
       $.each($scope.osaElements[$scope.currentScene.id], function(idx, elem) {
