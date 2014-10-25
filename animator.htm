@@ -341,8 +341,8 @@
  <div class="kf-data" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id]['c'].isOpen }">
 
   <h4 class="rot90" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id]['c'].isOpen }">
-    <a href="#" ng-click="createData('c')">Constants</a>
     <span ng-click="applyStyles('c')" ng-class="{ highlight : currentKeyframeId == 'c' }" class="glyphicon glyphicon-search ptr-cursor"></span>
+    <a href="#" ng-click="createData('c')">Constants</a>
   </h4>
 
   <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id]['c'].isOpen">
@@ -375,8 +375,8 @@
  <div class="kf-data" ng-repeat="kf in osaKeyframes[currentScene.id]" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id][kf.id].isOpen }">
 
   <h4 class="rot90" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id][kf.id].isOpen }">
-    <a href="#" ng-click="createData(kf.id)">{{kf.name}} @ {{kf.position}}</a>
     <span ng-click="applyStyles(kf.id)" ng-class="{ highlight : currentKeyframeId == kf.id }" class="glyphicon glyphicon-search ptr-cursor"></span>
+    <a href="#" ng-click="createData(kf.id)">{{kf.name}} @ {{kf.position}}</a>
   </h4>
 
   <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id][kf.id].isOpen">
@@ -419,6 +419,10 @@ TODO:
 4. Saving resulting file.
 5. Split js to separate file.
 6. Testing.
+7. Validation.
+8. ngCloak.
+9. Clear skrollr container.
+10. Clear current-scene.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
