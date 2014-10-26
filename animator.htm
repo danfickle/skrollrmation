@@ -482,9 +482,6 @@ TODO:
 5. Split js to separate file.
 6. Testing.
 13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
-14. Validation that all set properties are contained in at least two keyframes.
-15. Validation that constants are not contained in any other keyframe.
-16. Render scenes properly.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
@@ -635,16 +632,6 @@ TODO:
      else {
        $scope.osaElementKeyframeData[$scope.currentElement.id][kfId] = { "id" : uuid4.generate(), "hasData" : {}, "isOpen" : true };
      }
-    };
-
-    $scope.incDataItem = function(kfId, tag) {
-      $scope.osaElementKeyframeData[$scope.currentElement.id][kfId][tag.name] = Math.round((parseFloat($scope.osaElementKeyframeData[$scope.currentElement.id][kfId][tag.name]) + tag.inc) * 1000) / 1000;
-      $scope.applyStyles(kfId);
-    };
-
-    $scope.decDataItem = function(kfId, tag) {
-      $scope.osaElementKeyframeData[$scope.currentElement.id][kfId][tag.name] = Math.round((parseFloat($scope.osaElementKeyframeData[$scope.currentElement.id][kfId][tag.name]) - tag.inc)  * 1000) / 1000;
-      $scope.applyStyles(kfId);
     };
 
     $scope.destroyData = function(kfId, tag) {
