@@ -12,6 +12,7 @@
  <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
  <script src="third-party/sortable.js"></script>
  <script src="third-party/angular-uuid4.js"></script>
+ <script src="third-party/skrollr.min.js"></script>
 
  <style>
   div.project-header
@@ -172,6 +173,14 @@
 <div>
  <div class="project-header">
   <h2>
+  <button ng-click="renderSkrollr()" ng-show="currentProject && !renderMode" class="btn btn-primary btn-xs">
+   <span class="glyphicon glyphicon-picture"></span> Render
+  </button>
+
+  <button ng-click="renderMode = false" ng-show="renderMode" class="btn btn-primary btn-xs">
+   <span class="glyphicon glyphicon-edit"></span> Edit
+  </button>
+
   <span ng-show="currentProject">{{currentProject.name}}</span>
   <span ng-hide="currentProject">No project open</span>
   <span ng-show="currentScene">&gt; {{currentScene.name}}</span>
@@ -179,7 +188,7 @@
   </h2>
  </div>
 
- <div id="controls-main">
+ <div id="controls-main" ng-hide="renderMode">
 
  <ul class="nav nav-tabs" role="tablist">
 
@@ -208,8 +217,8 @@
   </li>
 
   <li>
-   <a href="#render-menu-tab" role="tab" data-toggle="tab">
-    Render
+   <a href="#about-menu-tab" role="tab" data-toggle="tab">
+    About / Help
    </a>
   </li>
 
@@ -328,16 +337,16 @@
 
   </div><!-- End element menu tab -->
 
-  <div class="tab-pane" id="render-menu-tab">
-  <div id="render-menu">
-   <button ng-click="renderSkrollr()" ng-show="currentProject" class="btn btn-primary btn-xl">Render</button>
+  <div class="tab-pane" id="about-menu-tab">
+  <div id="about-menu">
+
   </div>
-  </div><!-- End render menu tab -->
+  </div><!-- End about menu tab -->
 
 </div><!-- End tab content -->
 </div><!-- End controls-main -->
 
-<div id="element-keyframe" ng-show="currentElement">
+<div id="element-keyframe" ng-show="currentElement && !renderMode">
  <div class="kf-data" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id]['c'].isOpen }">
 
   <h4 class="rot90" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id]['c'].isOpen }">
@@ -426,11 +435,11 @@
  </div><!-- End kf-data item -->
 </div><!-- End element-keyframe content -->
 
- <div id="current-scene">
+ <div id="current-scene" ng-hide="renderMode">
   <img ng-repeat="elem in osaElements[currentScene.id]" id="{{elem.id}}">
  </div>
 
- <div id="skrollr-container"></div>
+ <div id="skrollr-container" ng-show="renderMode"></div>
 <script>
 /*
 TODO:
@@ -440,10 +449,9 @@ TODO:
 5. Split js to separate file.
 6. Testing.
 8. ngCloak.
-9. Clear skrollr container.
-10. Clear current-scene.
 11. Delete confirmation.
 12. Load empty scene.
+13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
@@ -474,6 +482,7 @@ TODO:
 
     $scope.allTags = $scope.tags.concat($scope.constants);
 
+    $scope.renderMode = false;
 
     $scope.currentProject = null;
     $scope.currentScene = null;
@@ -720,6 +729,9 @@ TODO:
 
     $scope.realRender = function(scenes) {
 
+      $('#skrollr-container').empty();
+      $scope.renderMode = true;
+
       var rollingScrollPosition = 0;
 
       $.each(scenes, function(idx, scene) {
@@ -745,8 +757,11 @@ TODO:
 
         $('#skrollr-container').append(sceneDiv);
       });
+      skrollr.get().refresh($('#skrollr-container'));
     };
   }]);
+
+  skrollr.init();
 </script>
 
 
