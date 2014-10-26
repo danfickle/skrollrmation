@@ -812,7 +812,8 @@ TODO:
       $('#skrollr-container').empty();
       $scope.renderMode = true;
 
-      var rollingScrollPosition = 1;
+      var rollingScrollPosition = 0;
+      var firstScene = true;
       $scope.osaErrors = [];
 
       $.each(scenes, function(idx, scene) {
@@ -820,8 +821,13 @@ TODO:
         var sceneStart = rollingScrollPosition;
 
         sceneDiv.css({ "position" : 'fixed', "width" : '100%', "height" : '100%', "top" : 0, "left" : 0 });
-        sceneDiv.attr('data-' + (sceneStart - 1), 'opacity:0;');
-        sceneDiv.attr('data-' + (sceneStart), 'opacity:1;');
+        if (!firstScene) {
+          sceneDiv.attr('data-' + (sceneStart - 1), 'opacity:0;');
+          sceneDiv.attr('data-' + (sceneStart), 'opacity:1;');
+        }
+        else {
+          firstScene = false;
+        }
 
         $.each(scene.elements, function(idx, elem) {
           var elemDiv = $('<img />');
