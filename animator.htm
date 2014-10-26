@@ -286,7 +286,7 @@
    <tr ng-repeat="kf in osaKeyframes[currentScene.id]">
      <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
      <td><input type="text" ng-model="kf.name" placeholder="Keyframe name"></td>
-     <td><input type="text" ng-model="kf.position" placeholder="Keyframe scroll position"></td>
+     <td><input type="number" min="0" ng-model="kf.position" placeholder="Keyframe scroll position"></td>
      <td><button class="btn btn-sm btn-danger" ng-click="deleteKeyframe($index, kf.id)">Delete</button></td>
    </tr>
   </tbody>
@@ -347,6 +347,11 @@
 
   <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id]['c'].isOpen">
    <span class="tag-cloud">
+     <span ng-repeat="tag in tags">
+     <a ng-hide="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]"
+        ng-click="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name] = true"
+        href="#">{{tag.name}}</a>
+     </span>
      <span ng-repeat="tag in constants">
      <a ng-hide="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]"
         ng-click="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name] = true"
@@ -354,6 +359,22 @@
      </span>
    </span>
 
+   <span ng-repeat="tag in tags">
+     <p ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">{{tag.placeholder}}</p>
+     <p class="nowrap-cls" ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">
+
+        <input class="kf-data-item-cls"
+               type="number"
+               min="{{tag.min}}"
+               max="{{tag.max}}"
+               step="{{tag.step ? tag.step : 1}}"
+               ng-model="osaElementKeyframeData[currentElement.id]['c'][tag.name]"
+               placeholder="{{tag.placeholder}}"
+               ng-change="applyStyles('c')">
+
+        <span class="destroy-data" ng-click="destroyData('c', tag)">&times;</span>
+     </p>
+   </span>
    <span ng-repeat="tag in constants">
      <p ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">{{tag.placeholder}}</p>
      <p class="nowrap-cls" ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">
@@ -362,10 +383,8 @@
                type="text"
                ng-model="osaElementKeyframeData[currentElement.id]['c'][tag.name]"
                placeholder="{{tag.placeholder}}"
-               ng-change="applyStyles('c')">
+               ng-blur="applyStyles('c')">
 
-        <span class="increment" ng-click="incDataItem('c', tag)" ng-show="tag.inc">+</span>
-        <span class="decrement" ng-click="decDataItem('c', tag)" ng-show="tag.inc">-</span>
         <span class="destroy-data" ng-click="destroyData('c', tag)">&times;</span>
      </p>
    </span>
@@ -392,13 +411,14 @@
      <p ng-show="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]">{{tag.placeholder}}</p>
      <p class="nowrap-cls" ng-show="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]">
        <input class="kf-data-item-cls"
-              type="text"
+              type="number"
+              min="{{tag.min}}"
+              max="{{tag.max}}"
+              step="{{tag.step ? tag.step : 1}}"
               ng-model="osaElementKeyframeData[currentElement.id][kf.id][tag.name]"
               placeholder="{{tag.placeholder}}"
               ng-change="applyStyles(kf.id)">
 
-       <span class="increment" ng-click="incDataItem(kf.id, tag)" ng-show="tag.inc">+</span>
-       <span class="decrement" ng-click="decDataItem(kf.id, tag)" ng-show="tag.inc">-</span>
        <span class="destroy-data" ng-click="destroyData(kf.id, tag)">&times;</span>
      </p>
    </span>
@@ -419,10 +439,11 @@ TODO:
 4. Saving resulting file.
 5. Split js to separate file.
 6. Testing.
-7. Validation.
 8. ngCloak.
 9. Clear skrollr container.
 10. Clear current-scene.
+11. Delete confirmation.
+12. Load empty scene.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
@@ -436,19 +457,23 @@ TODO:
     $scope.osaElementKeyframeData = [];
 
     $scope.tags = [
-      { "name" : 'top', "placeholder" : 'Top (px)', "inc" : 1, "unit" : 'px' },
-      { "name" : 'left', "placeholder" : 'Left (px)', "inc" : 1, "unit" : 'px' },
-      { "name" : 'width', "placeholder" : 'Width (px)', "inc" : 1, "unit" : 'px' },
-      { "name" : 'height', "placeholder" : 'Height (px)', "inc" : 1, "unit" : 'px' },
-      { "name" : 'opacity', "placeholder" : 'Opacity (0.0 to 1.0)', "inc" : 0.1, "unit" : '' },
-      { "name" : 'rotate', "placeholder" : 'Rotate (0 to 360)', "inc" : 1, "unit" : 'deg', "isTransform" : true },
-      { "name" : 'skewX', "placeholder" : 'Skew X (0 to 360)', "inc" : 1, "unit" : 'deg', "isTransform" : true },
-      { "name" : 'skewY', "placeholder" : 'Skew Y (0 to 360)', "inc" : 1, "unit" : 'deg', "isTransform" : true },
+      { "name" : 'top', "placeholder" : 'Top (px)', "unit" : 'px' },
+      { "name" : 'left', "placeholder" : 'Left (px)', "unit" : 'px' },
+      { "name" : 'width', "placeholder" : 'Width (px)', "unit" : 'px' },
+      { "name" : 'height', "placeholder" : 'Height (px)', "unit" : 'px' },
+      { "name" : 'opacity', "placeholder" : 'Opacity (0.0 to 1.0)', "unit" : '', "min" : 0, "max" : 1, "step" : 0.1 },
+      { "name" : 'rotate', "placeholder" : 'Rotate (deg)', "unit" : 'deg', "isTransform" : true },
+      { "name" : 'skewX', "placeholder" : 'Skew X (deg)', "unit" : 'deg', "isTransform" : true },
+      { "name" : 'skewY', "placeholder" : 'Skew Y (deg)', "unit" : 'deg', "isTransform" : true },
     ];
 
-    $scope.constants = $scope.tags.slice();
-    $scope.constants.push( { "name" : 'src', "placeholder" : 'Image Src (url)', inc : null, "unit" : '', "isAttr" : true } );
-    $scope.constants.push( { "name" : 'alt', "placeholder" : 'Image Alt Text', inc : null, "unit" : '', "isAttr" : true } );
+    $scope.constants = [
+      { "name" : 'src', "placeholder" : 'Image Src (url)', inc : null, "unit" : '', "isAttr" : true },
+      { "name" : 'alt', "placeholder" : 'Image Alt Text', inc : null, "unit" : '', "isAttr" : true }
+    ];
+
+    $scope.allTags = $scope.tags.concat($scope.constants);
+
 
     $scope.currentProject = null;
     $scope.currentScene = null;
@@ -549,10 +574,10 @@ TODO:
       $scope.applyStyles(kfId);
     };
 
-    $scope.applyStylesInternal = function(elem, kfId, kkfId, item) {
-          var transforms = '';
+    $scope.applyStylesInternal = function(elem, kfId, kkfId, item, transforms) {
 
-          if ($scope.osaElementKeyframeData[elem.id][kfId].hasData[item.name]) {
+          if (angular.isDefined($scope.osaElementKeyframeData[elem.id][kfId]) &&
+              $scope.osaElementKeyframeData[elem.id][kfId].hasData[item.name]) {
             var key = item.name;
             var value = $scope.osaElementKeyframeData[elem.id][kfId][item.name];
 
@@ -568,8 +593,7 @@ TODO:
             }
           }
 
-         if (transforms.length > 0)
-           $('#' + elem.id).css('transform', transforms);
+          return transforms;
     };
 
 
@@ -579,7 +603,7 @@ TODO:
 
       /* First clear existing styles and attributes. */
       $.each($scope.osaElements[$scope.currentScene.id], function(idx, elem) {
-       $.each($scope.constants, function(idx, item) {
+       $.each($scope.allTags, function(idx, item) {
          if (item.isTransform)
           $('#' + elem.id).css('transform', '');
          else if (item.isAttr)
@@ -593,7 +617,7 @@ TODO:
       $.each($scope.osaElements[$scope.currentScene.id], function(idx, elem) {
 
         /* Apply the constant styles first. */
-        $.each($scope.constants, function(idx, item) {
+        $.each($scope.allTags, function(idx, item) {
           $scope.applyStylesInternal(elem, 'c', 'c', item);
         });
 
@@ -601,9 +625,13 @@ TODO:
         {
          /* Apply the styles for other keyframes, stopping at kfId. */
          $.each($scope.osaKeyframes[$scope.currentScene.id], function(idx, kkf) {
-          $.each($scope.constants, function(idx, item) {
-            $scope.applyStylesInternal(elem, kkf.id, kfId, item);
+          var transforms = '';
+          $.each($scope.allTags, function(idx, item) {
+            transforms = $scope.applyStylesInternal(elem, kkf.id, kfId, item, transforms);
           });
+
+         if (transforms.length > 0)
+           $('#' + elem.id).css('transform', transforms);
 
           if (kkf.id == kfId)
            return false;
@@ -668,7 +696,7 @@ TODO:
     $scope.createConstants = function(elemDiv, kfData) {
       var transforms = '';
 
-      $.each($scope.constants, function(idx, item) {
+      $.each($scope.allTags, function(idx, item) {
          if (kfData.hasData[item.name]) {
             var key = item.name;
             var value = kfData[item.name];
