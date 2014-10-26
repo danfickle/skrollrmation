@@ -43,6 +43,7 @@
     top:0;
     left: 2.5em;
     opacity: 0.7;
+    padding-left: 2px;
   }
 
   a.create-item
@@ -164,7 +165,7 @@
     z-index: -1;
   }
 
-  #current-scene img, #skrollr-container img
+  #current-scene img
   {
     position: absolute;
   }
@@ -182,6 +183,10 @@
 
   <button ng-click="renderMode = false" ng-show="renderMode" class="btn btn-primary btn-xs">
    <span class="glyphicon glyphicon-edit"></span> Edit
+  </button>
+
+  <button ng-click="showErrorsTab()" ng-show="osaErrors.length && renderMode" class="btn btn-danger btn-xs">
+   <span class="glyphicon glyphicon-warning-sign"></span> Errors
   </button>
 
   <span ng-show="currentProject">{{currentProject.name}}</span>
@@ -216,6 +221,12 @@
   <li>
    <a href="#element-menu-tab" role="tab" data-toggle="tab">
     Images <span class="badge">{{currentScene ? osaElements[currentScene.id].length : 0}}</span>
+   </a>
+  </li>
+
+  <li>
+   <a href="#error-menu-tab" role="tab" data-toggle="tab">
+    Errors <span class="badge">{{osaErrors.length}}</span>
    </a>
   </li>
 
@@ -339,6 +350,26 @@
  </div>
 
   </div><!-- End element menu tab -->
+
+  <div class="tab-pane" id="error-menu-tab">
+  <div id="error-menu">
+  <table class="table table-condensed table-bordered table-striped">
+    <tbody>
+     <tr><th>Error</th><th>Property</th><th>Element</th><th>Scene</th></tr>
+    </tbody>
+
+    <tbody>
+      <tr class="danger" ng-repeat="err in osaErrors"><td>{{err.text}}</td><td>{{err.tag}}</td><td>{{err.element}}</td><td>{{err.scene}}</td></tr>
+    </tbody>
+
+    <tbody>
+      <tr class="success" ng-hide="osaErrors.length"><td colspan="4">No errors at last render!</td></tr>
+    </tbody>
+  </table>
+  </ul>
+  </div>
+  </div><!-- End error menu tab -->
+
 
   <div class="tab-pane" id="about-menu-tab">
   <div id="about-menu">
@@ -465,6 +496,7 @@ TODO:
     $scope.osaKeyframes = [];
     $scope.osaElements = [];
     $scope.osaElementKeyframeData = [];
+    $scope.osaErrors = [];
 
     $scope.tags = [
       { "name" : 'top', "placeholder" : 'Top (px)', "unit" : 'px' },
@@ -695,7 +727,7 @@ TODO:
 
        /* First iterate over all the scenes in the project. */
        $.each($scope.osaScenes[$scope.currentProject.id], function(idx, scene) {
-         var sceneSaved = { "id" : scene.id, "elements" : [], "keyframes" : [] };
+         var sceneSaved = { "id" : scene.id, "name" : scene.name, "elements" : [], "keyframes" : [] };
          scenes.push(sceneSaved);
 
          /* Start loading the elements for the scene. */
@@ -733,7 +765,7 @@ TODO:
       });
     };
 
-    $scope.createDataAttribute = function(elemDiv, kfData, position) {
+    $scope.createDataAttribute = function(elemDiv, kfData, position, stats) {
 
       var transforms = '';
       var dataAttr = '';
@@ -746,6 +778,11 @@ TODO:
          else {
            transforms += item.name + '(' + kfData[item.name] + item.unit + ') ';
          }
+
+         if (!stats.counts[item.name])
+           stats.counts[item.name] = 1;
+         else
+           stats.counts[item.name]++;
         }
       });
 
@@ -756,9 +793,9 @@ TODO:
     };
 
     /* Create the constant attributes and css for an img in the skrollr scene. */
-    $scope.createConstants = function(elemDiv, kfData) {
+    $scope.createConstants = function(elemDiv, kfData, stats) {
       var transforms = '';
-
+ 
       $.each($scope.allTags, function(idx, item) {
          if (kfData.hasData[item.name]) {
             var key = item.name;
@@ -774,7 +811,9 @@ TODO:
                value = value + item.unit;
                elemDiv.css(key, value);
             }
-          }
+
+            stats.hasConstant[item.name] = true;
+         }
 
          if (transforms.length > 0)
            elemDiv.css('transform', transforms);
@@ -787,6 +826,7 @@ TODO:
       $scope.renderMode = true;
 
       var rollingScrollPosition = 1;
+      $scope.osaErrors = [];
 
       $.each(scenes, function(idx, scene) {
         var sceneDiv = $('<div />');
@@ -798,18 +838,23 @@ TODO:
 
         $.each(scene.elements, function(idx, elem) {
           var elemDiv = $('<img />');
+          elemDiv.css('position', 'absolute');
+
+          var stats = { "hasConstant" : {}, "counts" : {} };
 
           if (elem.kfData && elem.kfData['c']) {
-            $scope.createConstants(elemDiv, elem.kfData['c']);
+            $scope.createConstants(elemDiv, elem.kfData['c'], stats);
           }
 
           $.each(scene.keyframes, function(idx, kf) {
             if (elem.kfData && elem.kfData[kf.id]) {
               var kfData = elem.kfData[kf.id];
-              $scope.createDataAttribute(elemDiv, kfData, kf.position + sceneStart);
+              $scope.createDataAttribute(elemDiv, kfData, kf.position + sceneStart, stats);
             }
             rollingScrollPosition = kf.position + sceneStart;
           });
+
+          $scope.reportErrors(stats, elem, scene);
 
           sceneDiv.append(elemDiv);
         });
@@ -821,6 +866,33 @@ TODO:
         $('#skrollr-container').append(sceneDiv);
       });
       skrollr.get().refresh();
+    };
+
+    $scope.reportErrors = function(stats, elem, scene) {
+
+      $.each($scope.allTags, function(idx, tag) {
+
+       if (stats.hasConstant[tag.name] && stats.counts[tag.name])
+         $scope.osaErrors.push({
+           "text" : 'You have defined a property as a constant as well as in a keyframe. This will not work.',
+           "tag" : tag.name,
+           "element" : elem.name,
+           "scene" : scene.name
+         });
+
+       if (stats.counts[tag.name] && stats.counts[tag.name] < 2)
+         $scope.osaErrors.push({
+           "text" : 'You have defined a property in a single keyframe. Animations run between two or more keyframes so this will not work.',
+           "tag" : tag.name,
+           "element" : elem.name,
+           "scene" : scene.name
+         });
+      });
+    };
+
+    $scope.showErrorsTab = function() {
+      $('a[href="#error-menu-tab"]').tab('show');
+      $scope.renderMode = false;
     };
   }]);
 
