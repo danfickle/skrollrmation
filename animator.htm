@@ -3,6 +3,7 @@
 <head>
  <title>Open Scroll Animator</title>
  <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+ <link rel="stylesheet" type="text/css" href="third-party/sweet-alert.css">
  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
@@ -13,6 +14,8 @@
  <script src="third-party/sortable.js"></script>
  <script src="third-party/angular-uuid4.js"></script>
  <script src="third-party/skrollr.min.js"></script>
+ <script src="third-party/sweet-alert.min.js"></script>
+
 
  <style>
   div.project-header
@@ -212,7 +215,7 @@
 
   <li>
    <a href="#element-menu-tab" role="tab" data-toggle="tab">
-    Elements <span class="badge">{{currentScene ? osaElements[currentScene.id].length : 0}}</span>
+    Images <span class="badge">{{currentScene ? osaElements[currentScene.id].length : 0}}</span>
    </a>
   </li>
 
@@ -322,15 +325,15 @@
   <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaElements[currentScene.id]">
    <tr ng-repeat="elem in osaElements[currentScene.id]">
      <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
-     <td><input type="text" ng-model="elem.name" placeholder="Element name"></td>
+     <td><input type="text" ng-model="elem.name" placeholder="Image name"></td>
      <td><button class="btn btn-sm btn-success" ng-click="loadElement(elem)">Load</button></td>
      <td><button class="btn btn-sm btn-danger" ng-click="deleteElement($index, elem.id)">Delete</button></td>
    </tr>
   </tbody>
 
   <tbody>
-    <tr ng-show="currentScene"><td colspan="4"><a href="#" class="create-item" ng-click="createElement()">Create element here</a></td></tr>
-    <tr ng-hide="currentScene"><td colspan="4">Please load a scene to view &amp; create elements</td></tr>
+    <tr ng-show="currentScene"><td colspan="4"><a href="#" class="create-item" ng-click="createElement()">Create image here</a></td></tr>
+    <tr ng-hide="currentScene"><td colspan="4">Please load a scene to view &amp; create images</td></tr>
   </tbody>
   </table>
  </div>
@@ -447,11 +450,11 @@ TODO:
 4. Saving resulting file.
 5. Split js to separate file.
 6. Testing.
-11. Delete confirmation.
 12. Load empty scene.
 13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
 14. Validation that all set properties are contained in at least two keyframes.
 15. Validation that constants are not contained in any other keyframe.
+16. Render scenes properly.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
@@ -492,8 +495,16 @@ TODO:
     $localForage.bind($scope, 'osaProjects');
 
     $scope.deleteProject = function(idx, id) {
-      if ($scope.osaProjects[idx].id === id) /* Sanity test. */
-        $scope.osaProjects.splice(idx, 1);
+      swal( { "title" : 'Delete Project Confirmation',
+              "text" : 'Are you sure you wish to delete an entire project?',
+              "showCancelButton" : true,
+              "confirmButtonClass" : 'btn-danger',
+              "type" : 'warning' }, function() {
+        if ($scope.osaProjects[idx].id === id) /* Sanity test. */ {
+          $scope.osaProjects.splice(idx, 1);
+          $scope.$apply(); /* This seems to be needed. */
+        }
+      });
     };
 
     $scope.createProject = function() {
@@ -514,8 +525,16 @@ TODO:
     };
 
     $scope.deleteScene = function(idx, id) {
-      if ($scope.osaScenes[$scope.currentProject.id][idx].id === id)
-        $scope.osaScenes[$scope.currentProject.id].splice(idx, 1);
+      swal( { "title" : 'Delete Scene Confirmation',
+              "text" : 'Are you sure you wish to delete an entire scene?',
+              "showCancelButton" : true,
+              "confirmButtonClass" : 'btn-danger',
+              "type" : 'warning' }, function() {
+        if ($scope.osaScenes[$scope.currentProject.id][idx].id === id) {
+          $scope.osaScenes[$scope.currentProject.id].splice(idx, 1);
+          $scope.$apply();
+        }
+     });
     };
 
     $scope.loadScene = function(scene) {
@@ -539,8 +558,16 @@ TODO:
     };
 
     $scope.deleteKeyframe = function(idx, id) {
-      if ($scope.osaKeyframes[$scope.currentScene.id][idx].id === id)
-        $scope.osaKeyframes[$scope.currentScene.id].splice(idx, 1);
+      swal( { "title" : 'Delete Keyframe Confirmation',
+              "text" : 'Are you sure you wish to delete this keyframe?',
+              "showCancelButton" : true,
+              "confirmButtonClass" : 'btn-danger',
+              "type" : 'warning' }, function() {
+        if ($scope.osaKeyframes[$scope.currentScene.id][idx].id === id) {
+          $scope.osaKeyframes[$scope.currentScene.id].splice(idx, 1);
+          $scope.$apply();
+        }
+      });
     };
 
     $scope.createElement = function() {
@@ -550,8 +577,16 @@ TODO:
     };
 
     $scope.deleteElement = function(idx, id) {
-      if ($scope.osaElements[$scope.currentScene.id][idx].id === id)
-        $scope.osaElements[$scope.currentScene.id].splice(idx, 1);
+      swal( { "title" : 'Delete Image Confirmation',
+              "text" : 'Are you sure you wish to delete this image?',
+              "showCancelButton" : true,
+              "confirmButtonClass" : 'btn-danger',
+              "type" : 'warning' }, function() {
+        if ($scope.osaElements[$scope.currentScene.id][idx].id === id) {
+          $scope.osaElements[$scope.currentScene.id].splice(idx, 1);
+          $scope.$apply();
+        }
+      });
     };
 
     $scope.loadElement = function(elem) {
