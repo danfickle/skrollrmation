@@ -170,7 +170,7 @@
 
 <body>
 
-<div>
+<div ng-cloak>
  <div class="project-header">
   <h2>
   <button ng-click="renderSkrollr()" ng-show="currentProject && !renderMode" class="btn btn-primary btn-xs">
@@ -444,14 +444,14 @@
 /*
 TODO:
 1. Proper deleting of related items.
-3. Rendering to skrollr.
 4. Saving resulting file.
 5. Split js to separate file.
 6. Testing.
-8. ngCloak.
 11. Delete confirmation.
 12. Load empty scene.
 13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
+14. Validation that all set properties are contained in at least two keyframes.
+15. Validation that constants are not contained in any other keyframe.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
@@ -696,9 +696,26 @@ TODO:
       });
     };
 
-    $scope.createDataAttribute = function() {
+    $scope.createDataAttribute = function(elemDiv, kfData, position) {
 
+      var transforms = '';
+      var dataAttr = '';
 
+      $.each($scope.tags, function(idx, item) {
+        if (kfData.hasData[item.name]) {
+         if (!item.isTransform) {
+           dataAttr += item.name + ':' + kfData[item.name] + item.unit + '; ';
+         }
+         else {
+           transforms += item.name + '(' + kfData[item.name] + item.unit + ') ';
+         }
+        }
+      });
+
+      if (transforms.length > 0)
+        dataAttr += 'transform:' + transforms + ';';
+
+      elemDiv.attr('data-' + position, dataAttr);
     };
 
     /* Create the constant attributes and css for an img in the skrollr scene. */
@@ -748,8 +765,9 @@ TODO:
 
           $.each(scene.keyframes, function(idx, kf) {
             var kfData = elem.kfData[kf.id];
-
-            $scope.createDataAttribute(elemDiv, kfData, kf.position);
+            if (angular.isDefined(kfData)) {
+              $scope.createDataAttribute(elemDiv, kfData, kf.position + sceneStart);
+            }
           });
 
           sceneDiv.append(elemDiv);
@@ -757,7 +775,7 @@ TODO:
 
         $('#skrollr-container').append(sceneDiv);
       });
-      skrollr.get().refresh($('#skrollr-container'));
+      skrollr.get().refresh();
     };
   }]);
 
