@@ -450,7 +450,6 @@ TODO:
 4. Saving resulting file.
 5. Split js to separate file.
 6. Testing.
-12. Load empty scene.
 13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
 14. Validation that all set properties are contained in at least two keyframes.
 15. Validation that constants are not contained in any other keyframe.
@@ -547,9 +546,11 @@ TODO:
       $localForage.bind($scope, { key : 'osaElements-' + $scope.currentScene.id, scopeKey: 'osaElements[\'' + $scope.currentScene.id + '\']' });
 
       $localForage.getItem('osaElements-' + $scope.currentScene.id).then( function(elems) {
-        $.each(elems, function(idx, elem) {
-          $localForage.bind($scope, { key : 'osaData-' + elem.id, scopeKey: 'osaElementKeyframeData[\'' + elem.id + '\']' });
-        });
+        if (elems) {
+          $.each(elems, function(idx, elem) {
+            $localForage.bind($scope, { key : 'osaData-' + elem.id, scopeKey: 'osaElementKeyframeData[\'' + elem.id + '\']' });
+          });
+        }
       });
     };
 
@@ -574,6 +575,7 @@ TODO:
       var id = uuid4.generate();
       $scope.osaElements[$scope.currentScene.id].push({ "id" : id });
       $scope.osaElementKeyframeData[id] = {};
+      $localForage.bind($scope, { key : 'osaData-' + id, scopeKey: 'osaElementKeyframeData[\'' + id + '\']' });
     };
 
     $scope.deleteElement = function(idx, id) {
