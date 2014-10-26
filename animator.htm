@@ -786,29 +786,37 @@ TODO:
       $('#skrollr-container').empty();
       $scope.renderMode = true;
 
-      var rollingScrollPosition = 0;
+      var rollingScrollPosition = 1;
 
       $.each(scenes, function(idx, scene) {
         var sceneDiv = $('<div />');
         var sceneStart = rollingScrollPosition;
 
         sceneDiv.css({ "position" : 'fixed', "width" : '100%', "height" : '100%', "top" : 0, "left" : 0 });
+        sceneDiv.attr('data-' + (sceneStart - 1), 'opacity:0;');
+        sceneDiv.attr('data-' + (sceneStart), 'opacity:1;');
 
         $.each(scene.elements, function(idx, elem) {
           var elemDiv = $('<img />');
 
-          var kfData = elem.kfData['c'];
-          $scope.createConstants(elemDiv, kfData);
+          if (elem.kfData && elem.kfData['c']) {
+            $scope.createConstants(elemDiv, elem.kfData['c']);
+          }
 
           $.each(scene.keyframes, function(idx, kf) {
-            var kfData = elem.kfData[kf.id];
-            if (angular.isDefined(kfData)) {
+            if (elem.kfData && elem.kfData[kf.id]) {
+              var kfData = elem.kfData[kf.id];
               $scope.createDataAttribute(elemDiv, kfData, kf.position + sceneStart);
             }
+            rollingScrollPosition = kf.position + sceneStart;
           });
 
           sceneDiv.append(elemDiv);
         });
+
+        sceneDiv.attr('data-' + (rollingScrollPosition), 'opacity:1;');
+        sceneDiv.attr('data-' + (rollingScrollPosition + 1), 'opacity:0;');
+        rollingScrollPosition += 2; /* 1px at start and end. */
 
         $('#skrollr-container').append(sceneDiv);
       });
