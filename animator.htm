@@ -144,14 +144,9 @@
     width: 80%;
   }
 
-  .increment, .decrement, .destroy-data
-  {
-    cursor: pointer;
-    font-size: 140%;
-  }
-
   .destroy-data
   {
+    cursor: pointer;
     font-size: 110%;
   }
 
@@ -513,8 +508,8 @@ TODO:
     ];
 
     $scope.constants = [
-      { "name" : 'src', "placeholder" : 'Image Src (url)', inc : null, "unit" : '', "isAttr" : true },
-      { "name" : 'alt', "placeholder" : 'Image Alt Text', inc : null, "unit" : '', "isAttr" : true }
+      { "name" : 'src', "placeholder" : 'Image Src (url)', "unit" : '', "isAttr" : true },
+      { "name" : 'alt', "placeholder" : 'Image Alt Text', "unit" : '', "isAttr" : true }
     ];
 
     $scope.allTags = $scope.tags.concat($scope.constants);
