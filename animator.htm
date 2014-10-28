@@ -385,6 +385,7 @@
   <div class="tab-pane" id="collaborate-menu-tab">
   <div id="collaborate-menu">
    <button class="btn btn-xl btn-primary" ng-show="currentProject" ng-click="saveJSON()">Save to JSON format</button>
+   <input type="file" id="load-file-box"><button class="btn btn-xl btn-primary" ng-click="loadJSON()">Load from JSON format</button>
   </div>
   </div><!-- End collaborate menu tab -->
 
@@ -493,6 +494,7 @@ TODO:
 6. Testing.
 13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
 14. Add meta generator or link to saved file.
+15. Find all TODO's in code.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
@@ -1006,6 +1008,38 @@ TODO:
 
       var blob = new Blob([angular.toJson(save)], {type: "application/json;charset=utf-8"});
       saveAs(blob, $scope.currentProject.name + '.json');
+    };
+
+    $scope.realLoadJSON = function(data) {
+      var save = angular.fromJson(data);
+
+      if (save.generatedBy !== 'Easy Skrollr Animate' ||
+          save.version !== 1) {
+        // TODO
+      }
+
+      $scope.currentProject = save.project;
+      $scope.osaProjects.push(save.project);
+      $scope.osaScenes[save.project.id] = save.scenes;
+
+      $.each(save.scenes, function(idx, scene) {
+        $scope.osaKeyframes[scene.id] = save.keyframes[scene.id];
+        $scope.osaElements[scene.id] = save.elements[scene.id];
+
+        $.each(save.elements[scene.id], function(idx, elem) {
+          $scope.osaElementKeyframeData[elem.id] = save.kfData[elem.id];
+        });
+      });
+
+      $scope.$apply();
+    };
+
+    $scope.loadJSON = function() {
+      var file = $('#load-file-box')[0].files[0];
+
+      var reader = new FileReader();
+      reader.onload = function() { $scope.realLoadJSON(this.result); };
+      reader.readAsText(file);
     };
   }]);
 
