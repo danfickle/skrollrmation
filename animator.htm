@@ -477,7 +477,6 @@
 <script>
 /*
 TODO:
-1. Proper deleting of related items.
 5. Split js to separate file.
 6. Testing.
 13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
@@ -486,13 +485,13 @@ TODO:
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
 
-  app.controller('osaController', ['$scope', '$q', '$localForage', 'uuid4', function($scope, $q, $localForage, uuid4) {
+  app.controller('osaController', ['$scope', '$q', '$localForage', 'uuid4', '$log', function($scope, $q, $localForage, uuid4, $log) {
 
     $scope.osaProjects = [];
-    $scope.osaScenes = [];
-    $scope.osaKeyframes = [];
-    $scope.osaElements = [];
-    $scope.osaElementKeyframeData = [];
+    $scope.osaScenes = {};              /* Keyed by project.id */
+    $scope.osaKeyframes = {};           /* Keyed by scene.id */
+    $scope.osaElements = {};            /* Keyed by scene.id */
+    $scope.osaElementKeyframeData = {}; /* Keyed by element.id */
     $scope.osaErrors = [];
 
     $scope.tags = [
@@ -523,6 +522,100 @@ TODO:
 
     $localForage.bind($scope, 'osaProjects');
 
+    $scope.realDeleteElement = function(sceneId, elemId) {
+
+        /* Remove any associated keyframe data. */
+        if ($scope.osaElementKeyframeData[elemId])
+          delete $scope.osaElementKeyframeData[elemId];
+
+        /* Remove from the in-memory list of elements. */
+        if ($scope.osaElements[sceneId]) {
+         $.each($scope.osaElements[sceneId], function(idx, elem) {
+            if (elem.id == elemId)
+              $scope.osaElements[sceneId].splice(idx, 1);
+         });
+        }
+
+        /* Remove any associated keyframe data from local storage. */
+        $localForage.removeItem('osaData-' + elemId);
+
+        if ($scope.currentElement.id == elemId)
+          $scope.currentElement = null;
+    };
+
+    $scope.realDeleteKeyframe = function(sceneId, keyframeId) {
+        /* Remove from the in-memory list of keyframes. */
+        if ($scope.osaKeyframes[sceneId]) {
+         $.each($scope.osaKeyframes[sceneId], function(idx, kf) {
+            if (kf.id == keyframeId)
+              $scope.osaKeyframes[sceneId].splice(idx, 1);
+         });
+        }
+
+        if ($scope.currentKeyframeId == keyframeId)
+          $scope.currentKeyframeId = null;
+    };
+
+    $scope.realDeleteScene = function(projectId, sceneId) {
+         /* Remove associated elements. */
+         $localForage.getItem('osaElements-' + sceneId).then(function(elems) {
+           $.each(elems, function(idx, elem) {
+             $scope.realDeleteElement(sceneId, elem.id);
+           });
+         });
+
+         /* Remove associated keyframes. */
+         $localForage.getItem('osaKeyframes-' + sceneId).then(function(kfs) {
+           $.each(kfs, function(idx, kf) {
+             $scope.realDeleteKeyframe(sceneId, kf.id);
+           });
+         });
+
+         /* Remove lists from memory. */
+         delete $scope.osaElements[sceneId];
+         delete $scope.osaKeyframes[sceneId];
+
+         /* Remove lists from storage. */
+         $localForage.removeItem('osaKeyframes-' + sceneId);
+         $localForage.removeItem('osaElements-' + sceneId);
+
+         /* Finally if, the parent project is loaded, this will remove it from the scenes list on screen. */
+         if ($scope.osaScenes[projectId])
+         {
+           $.each($scope.osaScenes[projectId], function(idx, scene) {
+             if (scene.id == sceneId)
+               $scope.osaScenes[projectId].splice(idx, 1);
+           });
+         }
+
+         if ($scope.currentScene.id == sceneId)
+           $scope.currentScene = null;
+    };
+
+    $scope.realDeleteProject = function(projectId) {
+      $localForage.getItem('osaScenes-' + projectId).then(function(scenes) {
+
+        /* Remove associated scenes. */
+        $.each(scenes, function(idx, scene) {
+          $scope.realDeleteScene(projectId, scene.id);
+        });
+
+        $localForage.removeItem('osaScenes-' + projectId);
+      });
+
+      if ($scope.osaProjects)
+      {
+        /* Remove from memory list. */
+        $.each($scope.osaProjects, function(idx, project) {
+          if (project.id == projectId)
+            $scope.osaProjects.splice(idx, 1);
+        });
+      }
+
+      if ($scope.currentProject.id == projectId)
+        $scope.currentProject = null;
+    };
+
     $scope.deleteProject = function(idx, id) {
       swal( { "title" : 'Delete Project Confirmation',
               "text" : 'Are you sure you wish to delete an entire project?',
@@ -530,14 +623,16 @@ TODO:
               "confirmButtonClass" : 'btn-danger',
               "type" : 'warning' }, function() {
         if ($scope.osaProjects[idx].id === id) /* Sanity test. */ {
-          $scope.osaProjects.splice(idx, 1);
+          $scope.realDeleteProject(id);
           $scope.$apply(); /* This seems to be needed. */
         }
       });
     };
 
     $scope.createProject = function() {
-      $scope.osaProjects.push({ "id" : uuid4.generate() });
+      var id = uuid4.generate();
+      $scope.osaProjects.push({ "id" : id });
+      $localForage.bind($scope, { "key" : 'osaScenes-' + id, "scopeKey" : 'osaScenes[\'' + id + '\']', "defaultValue" : [] });
     };
 
     $scope.loadProject = function(project) {
@@ -545,12 +640,15 @@ TODO:
       $scope.currentElement = null;
       $scope.currentScene = null;
       $scope.currentProject = project;
-      $scope.osaScenes[$scope.currentProject.id] = [];
-      $localForage.bind($scope, { key : 'osaScenes-' + $scope.currentProject.id, scopeKey: 'osaScenes[\'' + $scope.currentProject.id + '\']' });
+
+      $scope.loadProjectIntoMemory(project);
     };
 
     $scope.createScene = function() {
-      $scope.osaScenes[$scope.currentProject.id].push({ "id" : uuid4.generate() });
+      var id = uuid4.generate();
+      $scope.osaScenes[$scope.currentProject.id].push({ "id" : id });
+      $localForage.bind($scope, { "key" : 'osaKeyframes-' + id, "scopeKey" : 'osaKeyframes[\'' + id + '\']',  "defaultValue" : [] });
+      $localForage.bind($scope, { "key" : 'osaElements-' + id, "scopeKey" : 'osaElements[\'' + id + '\']',  "defaultValue" : [] });
     };
 
     $scope.deleteScene = function(idx, id) {
@@ -560,7 +658,7 @@ TODO:
               "confirmButtonClass" : 'btn-danger',
               "type" : 'warning' }, function() {
         if ($scope.osaScenes[$scope.currentProject.id][idx].id === id) {
-          $scope.osaScenes[$scope.currentProject.id].splice(idx, 1);
+          $scope.realDeleteScene($scope.currentProject.id, id);
           $scope.$apply();
         }
      });
@@ -570,22 +668,11 @@ TODO:
       $scope.currentKeyframeId = null;
       $scope.currentElement = null;
       $scope.currentScene = scene;
-      $scope.osaKeyframes[$scope.currentScene.id] = [];
-      $scope.osaElements[$scope.currentScene.id] = [];
-      $localForage.bind($scope, { key : 'osaKeyframes-' + $scope.currentScene.id, scopeKey: 'osaKeyframes[\'' + $scope.currentScene.id + '\']' });
-      $localForage.bind($scope, { key : 'osaElements-' + $scope.currentScene.id, scopeKey: 'osaElements[\'' + $scope.currentScene.id + '\']' });
-
-      $localForage.getItem('osaElements-' + $scope.currentScene.id).then( function(elems) {
-        if (elems) {
-          $.each(elems, function(idx, elem) {
-            $localForage.bind($scope, { key : 'osaData-' + elem.id, scopeKey: 'osaElementKeyframeData[\'' + elem.id + '\']' });
-          });
-        }
-      });
     };
 
     $scope.createKeyframe = function() {
-      $scope.osaKeyframes[$scope.currentScene.id].push({ "id" : uuid4.generate() });
+      var id = uuid4.generate();
+      $scope.osaKeyframes[$scope.currentScene.id].push({ "id" : id });
     };
 
     $scope.deleteKeyframe = function(idx, id) {
@@ -595,7 +682,7 @@ TODO:
               "confirmButtonClass" : 'btn-danger',
               "type" : 'warning' }, function() {
         if ($scope.osaKeyframes[$scope.currentScene.id][idx].id === id) {
-          $scope.osaKeyframes[$scope.currentScene.id].splice(idx, 1);
+          $scope.realDeleteKeyframe($scope.currentScene.id, id);
           $scope.$apply();
         }
       });
@@ -605,7 +692,7 @@ TODO:
       var id = uuid4.generate();
       $scope.osaElements[$scope.currentScene.id].push({ "id" : id });
       $scope.osaElementKeyframeData[id] = {};
-      $localForage.bind($scope, { key : 'osaData-' + id, scopeKey: 'osaElementKeyframeData[\'' + id + '\']' });
+      $localForage.bind($scope, { key : 'osaData-' + id, scopeKey: 'osaElementKeyframeData[\'' + id + '\']', "defaultValue" : {} });
     };
 
     $scope.deleteElement = function(idx, id) {
@@ -615,7 +702,7 @@ TODO:
               "confirmButtonClass" : 'btn-danger',
               "type" : 'warning' }, function() {
         if ($scope.osaElements[$scope.currentScene.id][idx].id === id) {
-          $scope.osaElements[$scope.currentScene.id].splice(idx, 1);
+          $scope.realDeleteElement($scope.currentScene.id, id);
           $scope.$apply();
         }
       });
@@ -623,7 +710,6 @@ TODO:
 
     $scope.loadElement = function(elem) {
       $scope.currentElement = elem;
-      $localForage.bind($scope, { key : 'osaData-' + $scope.currentElement.id, scopeKey: 'osaElementKeyframeData[\'' + $scope.currentElement.id + '\']' });
     };
 
     $scope.createData = function(kfId) {
@@ -706,51 +792,30 @@ TODO:
       });
     };
 
-    /* This function loads all the data into memory and then calls realRender. */
     $scope.renderSkrollr = function() {
+      $scope.realRender($scope.osaScenes[$scope.currentProject.id]);
+    };
 
-       var scenes = [];
+    /* This function loads all the scenes, keyframes, elements and element keyframe data into memory
+     * for the given project. */
+    $scope.loadProjectIntoMemory = function(project) {
 
-       var promises = [];
+     $localForage.bind($scope, { key : 'osaScenes-' + project.id, scopeKey: 'osaScenes[\'' + project.id + '\']' });
 
-       /* First iterate over all the scenes in the project. */
-       $.each($scope.osaScenes[$scope.currentProject.id], function(idx, scene) {
-         var sceneSaved = { "id" : scene.id, "name" : scene.name, "elements" : [], "keyframes" : [] };
-         scenes.push(sceneSaved);
+     $localForage.getItem('osaScenes-' + project.id).then(function(scenesM) {
+       /* Iterate over all the scenes in the project. */
+       $.each(scenesM, function(idx, scene) {
+         $localForage.bind($scope, { key : 'osaKeyframes-' + scene.id, scopeKey: 'osaKeyframes[\'' + scene.id + '\']' });
+         $localForage.bind($scope, { key : 'osaElements-' + scene.id, scopeKey: 'osaElements[\'' + scene.id + '\']' });
 
-         /* Start loading the elements for the scene. */
-         var promise = $localForage.getItem('osaElements-' + scene.id).then(function(elems) {
+         /* Iterate over all the elements in the scene. */
+         $localForage.getItem('osaElements-' + scene.id).then(function(elems) {
           $.each(elems, function(idx, elem) {
-            sceneSaved.elements.push(elem);
+           $localForage.bind($scope, { key : 'osaData-' + elem.id, scopeKey: 'osaElementKeyframeData[\'' + elem.id + '\']' });
           });
          });
-
-         promises.push(promise);
-
-         /* Start loading the keyframes for the scene. */
-         var promise2 = $localForage.getItem('osaKeyframes-' + scene.id).then(function(elems) {
-          $.each(elems, function(idx, kf) {
-            sceneSaved.keyframes.push(kf);
-          });
-         });
-
-         promises.push(promise2);
        });
-
-       $q.all(promises).then(function() {
-         var promises2 = [];
-         /* So now all the scenes, with their elements and keyframes are loaded.
-          * We then get all the element keyframe data. */
-         $.each(scenes, function(idx, scene) {
-          $.each(scene.elements, function(idx, elem) {
-           var promise3 = $localForage.getItem('osaData-' + elem.id).then(function(elemKfData) {
-             elem.kfData = elemKfData;
-           });
-           promises2.push(promise3);
-          });
-        });
-        $q.all(promises2).then(function() { $scope.realRender(scenes); });
-      });
+     });
     };
 
     $scope.createDataAttribute = function(elemDiv, kfData, position, stats) {
@@ -830,21 +895,17 @@ TODO:
           firstScene = false;
         }
 
-        $.each(scene.elements, function(idx, elem) {
+        $.each($scope.osaElements[scene.id], function(idx, elem) {
           var elemDiv = $('<img />');
           elemDiv.css('position', 'absolute');
 
           var stats = { "hasConstant" : {}, "counts" : {} };
 
-          if (elem.kfData && elem.kfData['c']) {
-            $scope.createConstants(elemDiv, elem.kfData['c'], stats);
-          }
+          $scope.createConstants(elemDiv, $scope.osaElementKeyframeData[elem.id]['c'], stats);
 
-          $.each(scene.keyframes, function(idx, kf) {
-            if (elem.kfData && elem.kfData[kf.id]) {
-              var kfData = elem.kfData[kf.id];
-              $scope.createDataAttribute(elemDiv, kfData, kf.position + sceneStart, stats);
-            }
+          $.each($scope.osaKeyframes[scene.id], function(idx, kf) {
+            var kfData = $scope.osaElementKeyframeData[elem.id][kf.id];
+            $scope.createDataAttribute(elemDiv, kfData, kf.position + sceneStart, stats);
             rollingScrollPosition = kf.position + sceneStart;
           });
 
