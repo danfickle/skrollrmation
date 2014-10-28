@@ -60,7 +60,7 @@
     position: fixed;
     bottom: 0;
     left: 2.5em;
-    min-height: 400px;
+    min-height: 200px;
     white-space: nowrap;
     opacity: 0.7;
   }
@@ -230,6 +230,12 @@
   </li>
 
   <li>
+   <a href="#collaborate-menu-tab" role="tab" data-toggle="tab">
+    Collaborate
+   </a>
+  </li>
+
+  <li>
    <a href="#about-menu-tab" role="tab" data-toggle="tab">
     About / Help
    </a>
@@ -375,6 +381,12 @@
 
   </div>
   </div><!-- End about menu tab -->
+
+  <div class="tab-pane" id="collaborate-menu-tab">
+  <div id="collaborate-menu">
+   <button class="btn btn-xl btn-primary" ng-show="currentProject" ng-click="saveJSON()">Save to JSON format</button>
+  </div>
+  </div><!-- End collaborate menu tab -->
 
 </div><!-- End tab content -->
 </div><!-- End controls-main -->
@@ -971,6 +983,29 @@ TODO:
       var blob = new Blob([header + $('#skrollr-container').html() + footer], {type: "text/html;charset=utf-8"});
       saveAs(blob, $scope.currentProject.name + '.htm');
       skrollr.init();
+    };
+
+    $scope.saveJSON = function() {
+      var save = { "id" : uuid4.generate(), "version" : 1, "generatedBy" : 'Easy Skrollr Animate',
+                   "generatorLink" : 'TODO' };
+
+      save.project = $scope.currentProject;
+      save.scenes = $scope.osaScenes[$scope.currentProject.id];
+      save.keyframes = {};
+      save.elements = {};
+      save.kfData = {};
+
+      $.each(save.scenes, function(idx, scene) {
+        save.keyframes[scene.id] = $scope.osaKeyframes[scene.id];
+        save.elements[scene.id] = $scope.osaElements[scene.id];
+
+        $.each(save.elements[scene.id], function(idx, elem) {
+          save.kfData[elem.id] = $scope.osaElementKeyframeData[elem.id];
+        });
+      });
+
+      var blob = new Blob([angular.toJson(save)], {type: "application/json;charset=utf-8"});
+      saveAs(blob, $scope.currentProject.name + '.json');
     };
   }]);
 
