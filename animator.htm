@@ -375,19 +375,18 @@
   </div>
   </div><!-- End error menu tab -->
 
-
-  <div class="tab-pane" id="about-menu-tab">
-  <div id="about-menu">
-
-  </div>
-  </div><!-- End about menu tab -->
-
   <div class="tab-pane" id="collaborate-menu-tab">
   <div id="collaborate-menu">
    <button class="btn btn-xl btn-primary" ng-show="currentProject" ng-click="saveJSON()">Save to JSON format</button>
    <input type="file" id="load-file-box"><button class="btn btn-xl btn-primary" ng-click="loadJSON()">Load from JSON format</button>
   </div>
   </div><!-- End collaborate menu tab -->
+
+  <div class="tab-pane" id="about-menu-tab">
+  <div id="about-menu">
+
+  </div>
+  </div><!-- End about menu tab -->
 
 </div><!-- End tab content -->
 </div><!-- End controls-main -->
@@ -495,6 +494,7 @@ TODO:
 13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
 14. Add meta generator or link to saved file.
 15. Find all TODO's in code.
+16. Bind data loaded from JSON.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
