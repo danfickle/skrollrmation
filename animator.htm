@@ -762,7 +762,6 @@ TODO:
           return transforms;
     };
 
-
     $scope.applyStyles = function(kfId /* Which keyframe to stop at? */) {
 
       $scope.currentKeyframeId = kfId;
@@ -988,6 +987,10 @@ TODO:
     };
 
     $scope.saveJSON = function() {
+      $scope.v1SaveJSON();
+    };
+
+    $scope.v1SaveJSON = function() {
       var save = { "id" : uuid4.generate(), "version" : 1, "generatedBy" : 'Easy Skrollr Animate',
                    "generatorLink" : 'TODO' };
 
@@ -1011,23 +1014,80 @@ TODO:
     };
 
     $scope.realLoadJSON = function(data) {
-      var save = angular.fromJson(data);
+      var load = angular.fromJson(data);
 
-      if (save.generatedBy !== 'Easy Skrollr Animate' ||
-          save.version !== 1) {
+      if (load.generatedBy !== 'Easy Skrollr Animate' ||
+          load.version !== 1) {
         // TODO
       }
 
+      $scope.v1LoadJSON(load);
+    };
+
+    $scope.v1LoadJSON = function(load) {
+      save = {};
+      save.project = angular.copy(load.project);
+      save.project.id = uuid4.generate();
+
+      /* First we generate new ids for everything to avoid overwriting any existing projects, etc. */
+      save.scenes = [];
+      save.keyframes = {};
+      save.elements = {};
+      save.kfData = {};
+
+      $.each(load.scenes, function(idx, scene) {
+        var newScene = angular.copy(scene);
+        newScene.id = uuid4.generate();
+
+        save.keyframes[newScene.id] = [];
+        save.elements[newScene.id] = [];
+
+        $.each(load.keyframes[scene.id], function(idx, kf) {
+          var newKf = angular.copy(kf);
+          newKf.id = uuid4.generate();
+          kf.newId = newKf.id;
+          save.keyframes[newScene.id].push(newKf);
+        });
+
+        $.each(load.elements[scene.id], function(idx, elem) {
+          var newElem = angular.copy(elem);
+          newElem.id = uuid4.generate();
+          elem.newId = newElem.id;
+          save.elements[newScene.id].push(newElem);
+        });
+
+        $.each(load.elements[scene.id], function(idx, elem) {
+
+          $.each(load.keyframes[scene.id], function(idx, kf) {
+            if (load.kfData[elem.id] && load.kfData[elem.id][kf.id]) {
+              if (!save.kfData[elem.newId])
+                save.kfData[elem.newId] = {};
+
+              save.kfData[elem.newId][kf.newId] = angular.copy(load.kfData[elem.id][kf.id]);
+              save.kfData[elem.newId][kf.newId].id = uuid4.generate();
+            }
+          });
+        });
+
+        save.scenes.push(newScene);
+      });
+
       $scope.currentProject = save.project;
       $scope.osaProjects.push(save.project);
+
       $scope.osaScenes[save.project.id] = save.scenes;
+      $localForage.bind($scope, { "key" : 'osaScenes-' + save.project.id, "scopeKey" : 'osaScenes[\'' + save.project.id + '\']' });
 
       $.each(save.scenes, function(idx, scene) {
         $scope.osaKeyframes[scene.id] = save.keyframes[scene.id];
         $scope.osaElements[scene.id] = save.elements[scene.id];
 
+        $localForage.bind($scope, { "key" : 'osaKeyframes-' + scene.id, "scopeKey" : 'osaKeyframes[\'' + scene.id + '\']' });
+        $localForage.bind($scope, { "key" : 'osaElements-' + scene.id, "scopeKey" : 'osaElements[\'' + scene.id + '\']' });
+
         $.each(save.elements[scene.id], function(idx, elem) {
           $scope.osaElementKeyframeData[elem.id] = save.kfData[elem.id];
+          $localForage.bind($scope, { key : 'osaData-' + elem.id, scopeKey: 'osaElementKeyframeData[\'' + elem.id + '\']' });
         });
       });
 
