@@ -377,8 +377,10 @@
 
   <div class="tab-pane" id="collaborate-menu-tab">
   <div id="collaborate-menu">
-   <button class="btn btn-xl btn-primary" ng-show="currentProject" ng-click="saveJSON()">Save to JSON format</button>
-   <input type="file" id="load-file-box"><button class="btn btn-xl btn-primary" ng-click="loadJSON()">Load from JSON format</button>
+   <table class="table">   
+    <tr ng-show="currentProject"><td><input type="text" placeholder="Save note" ng-model="saveNote"></td><td><button class="btn btn-xl btn-primary" ng-click="saveJSON()">Save to JSON format</button></td></tr>
+    <tr><td><input type="file" id="load-file-box"></td><td><button class="btn btn-xl btn-primary" ng-click="loadJSON()">Load from JSON format</button></td></tr>
+   </table>
   </div>
   </div><!-- End collaborate menu tab -->
 
@@ -528,6 +530,7 @@ TODO:
     $scope.allTags = $scope.tags.concat($scope.constants);
 
     $scope.renderMode = false;
+    $scope.saveNote = '';
 
     $scope.currentProject = null;
     $scope.currentScene = null;
@@ -1062,12 +1065,9 @@ TODO:
         });
 
         $.each(load.elements[scene.id], function(idx, elem) {
-
+          save.kfData[elem.newId] = {};
           $.each(load.keyframes[scene.id], function(idx, kf) {
             if (load.kfData[elem.id] && load.kfData[elem.id][kf.id]) {
-              if (!save.kfData[elem.newId])
-                save.kfData[elem.newId] = {};
-
               save.kfData[elem.newId][kf.newId] = angular.copy(load.kfData[elem.id][kf.id]);
               save.kfData[elem.newId][kf.newId].id = uuid4.generate();
             }
@@ -1077,7 +1077,11 @@ TODO:
         save.scenes.push(newScene);
       });
 
+      $scope.currentKeyframeId = null;
+      $scope.currentElement = null;
+      $scope.currentScene = null;
       $scope.currentProject = save.project;
+
       $scope.osaProjects.push(save.project);
 
       $scope.osaScenes[save.project.id] = save.scenes;
@@ -1101,6 +1105,9 @@ TODO:
 
     $scope.loadJSON = function() {
       var file = $('#load-file-box')[0].files[0];
+
+      if (!file)
+        return;
 
       var reader = new FileReader();
       reader.onload = function() { $scope.realLoadJSON(this.result); };
