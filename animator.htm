@@ -556,7 +556,7 @@ TODO:
         /* Remove any associated keyframe data from local storage. */
         $localForage.removeItem('osaData-' + elemId);
 
-        if ($scope.currentElement.id == elemId)
+        if ($scope.currentElement && $scope.currentElement.id == elemId)
           $scope.currentElement = null;
     };
 
@@ -605,7 +605,7 @@ TODO:
            });
          }
 
-         if ($scope.currentScene.id == sceneId)
+         if ($scope.currentScene && $scope.currentScene.id == sceneId)
            $scope.currentScene = null;
     };
 
@@ -629,7 +629,7 @@ TODO:
         });
       }
 
-      if ($scope.currentProject.id == projectId)
+      if ($scope.currentProject && $scope.currentProject.id == projectId)
         $scope.currentProject = null;
     };
 
