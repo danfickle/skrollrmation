@@ -1002,6 +1002,7 @@ TODO:
       save.keyframes = {};
       save.elements = {};
       save.kfData = {};
+      save.note = $scope.saveNote;
 
       $.each(save.scenes, function(idx, scene) {
         save.keyframes[scene.id] = $scope.osaKeyframes[scene.id];
@@ -1027,6 +1028,13 @@ TODO:
               "showCancelButton" : false,
               "confirmButtonClass" : 'btn-warning',
               "type" : 'warning' });
+      }
+      else {
+        swal( { "title" : 'Opening project',
+              "text" : (load.note && load.note.length ? 'Project Note: ' + load.note : ''),
+              "showCancelButton" : false,
+              "confirmButtonClass" : 'btn-info',
+              "type" : 'success' });
       }
 
       $scope.v1LoadJSON(load);
