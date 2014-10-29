@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html ng-app="openScrollAnimator" ng-controller="osaController">
 <head>
- <title>Open Scroll Animator</title>
+ <title>Easy Skrollr Animate</title>
  <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
  <link rel="stylesheet" type="text/css" href="third-party/sweet-alert.css">
  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
@@ -494,7 +494,7 @@ TODO:
 13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
 14. Add meta generator or link to saved file.
 15. Find all TODO's in code.
-16. Bind data loaded from JSON.
+16. Load sample data.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
@@ -1016,9 +1016,14 @@ TODO:
     $scope.realLoadJSON = function(data) {
       var load = angular.fromJson(data);
 
-      if (load.generatedBy !== 'Easy Skrollr Animate' ||
+      if (!load.generatedBy ||
+          load.generatedBy !== 'Easy Skrollr Animate' ||
           load.version !== 1) {
-        // TODO
+      swal( { "title" : 'Wrong application or version',
+              "text" : 'Unfortunately, the file you have provided could not be opened by this version of Easy Skrollr Animate.',
+              "showCancelButton" : false,
+              "confirmButtonClass" : 'btn-warning',
+              "type" : 'warning' });
       }
 
       $scope.v1LoadJSON(load);
