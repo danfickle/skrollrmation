@@ -259,7 +259,9 @@
    <tr ng-repeat="pject in osaProjects">
      <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
      <td><input type="text" ng-model="pject.name" placeholder="Project Name"></td>
-     <td><button class="btn btn-sm btn-success" ng-click="loadProject(pject)">Load</button></td>
+     <td><button class="btn btn-sm"
+                 ng-class="{ 'btn-success' : pject.id === currentProject.id, 'btn-primary' : pject.id !== currentProject.id }"
+                 ng-click="loadProject(pject)">Load</button></td>
      <td><button class="btn btn-sm btn-danger" ng-click="deleteProject($index, pject.id)">Delete</button></td>
    </tr>
   </tbody>
@@ -286,7 +288,9 @@
    <tr ng-repeat="scene in osaScenes[currentProject.id]">
      <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
      <td><input type="text" ng-model="scene.name" placeholder="Scene Name"></td>
-     <td><button class="btn btn-sm btn-success" ng-click="loadScene(scene)">Load</button></td>
+     <td><button class="btn btn-sm"
+                 ng-class="{ 'btn-success' : scene.id === currentScene.id, 'btn-primary' : scene.id !== currentScene.id }"
+                 ng-click="loadScene(scene)">Load</button></td>
      <td><button class="btn btn-sm btn-danger" ng-click="deleteScene($index, scene.id)">Delete</button></td>
    </tr>
   </tbody>
@@ -342,7 +346,9 @@
    <tr ng-repeat="elem in osaElements[currentScene.id]">
      <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
      <td><input type="text" ng-model="elem.name" placeholder="Image name"></td>
-     <td><button class="btn btn-sm btn-success" ng-click="loadElement(elem)">Load</button></td>
+     <td><button class="btn btn-sm"
+                 ng-class="{ 'btn-success' : elem.id === currentElement.id, 'btn-primary' : elem.id !== currentElemnent.id }"
+                 ng-click="loadElement(elem)">Load</button></td>
      <td><button class="btn btn-sm btn-danger" ng-click="deleteElement($index, elem.id)">Delete</button></td>
    </tr>
   </tbody>
