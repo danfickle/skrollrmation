@@ -90,6 +90,7 @@
   h4.kf-data-expanded
   {
     transform: none !important;
+    white-space: normal;
   }
 
   div.kf-data-expanded
@@ -388,6 +389,7 @@
    <table class="table">   
     <tr ng-show="currentProject"><td><input type="text" placeholder="Save note" ng-model="saveNote"></td><td><button class="btn btn-xl btn-primary" ng-click="saveJSON()"><span class="glyphicon glyphicon-floppy-disk"></span> Save to JSON format</button></td></tr>
     <tr><td><input type="file" id="load-file-box"></td><td><button class="btn btn-xl btn-primary" ng-click="loadJSON()"><span class="glyphicon glyphicon-hdd"></span> Load from JSON format</button></td></tr>
+    <tr><td>&nbsp;</td><td><button class="btn btn-xl btn-primary" ng-disabled="loadingData" ng-click="loadSample()"><span class="glyphicon glyphicon-hdd"></span> Load sample project</button></td></tr>
    </table>
   </div>
   </div><!-- End collaborate menu tab -->
@@ -502,14 +504,15 @@ TODO:
 5. Split js to separate file.
 6. Testing.
 14. Add meta generator or link to saved file.
-15. Find all TODO's in code.
-16. Load sample data.
+15. Find all TODO's in code, sample.json, etc.
 17. Do about/help tab.
+18. Add images and get copyright clearance.
+19. Do gh-pages.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
 
-  app.controller('osaController', ['$scope', '$q', '$localForage', 'uuid4', '$filter', function($scope, $q, $localForage, uuid4, $filter) {
+  app.controller('osaController', ['$scope', '$q', '$localForage', 'uuid4', '$filter', '$http', function($scope, $q, $localForage, uuid4, $filter, $http) {
 
     $scope.osaProjects = [];
     $scope.osaScenes = {};              /* Keyed by project.id */
@@ -538,6 +541,7 @@ TODO:
     $scope.allTags = $scope.tags.concat($scope.constants);
 
     $scope.renderMode = false;
+    $scope.loadingData = false;
     $scope.saveNote = '';
 
     $scope.currentProject = null;
@@ -1047,11 +1051,12 @@ TODO:
       if (!load.generatedBy ||
           load.generatedBy !== 'Easy Skrollr Animate' ||
           load.version !== 1) {
-      swal( { "title" : 'Wrong application or version',
+        swal( { "title" : 'Wrong application or version',
               "text" : 'Unfortunately, the file you have provided could not be opened by this version of Easy Skrollr Animate.',
               "showCancelButton" : false,
               "confirmButtonClass" : 'btn-warning',
               "type" : 'warning' });
+        return;
       }
       else {
         swal( { "title" : 'Opening project',
@@ -1137,8 +1142,6 @@ TODO:
           $localForage.bind($scope, { key : 'osaData-' + elem.id, scopeKey: 'osaElementKeyframeData[\'' + elem.id + '\']' });
         });
       });
-
-      $scope.$apply();
     };
 
     $scope.loadJSON = function() {
@@ -1150,6 +1153,15 @@ TODO:
       var reader = new FileReader();
       reader.onload = function() { $scope.realLoadJSON(this.result); };
       reader.readAsText(file);
+    };
+
+    $scope.loadSample = function() {
+      $scope.loadingData = true;
+
+      $http.get('sample.json').success(function(data, status) {
+        $scope.loadingData = false;
+        $scope.realLoadJSON(data);
+      });
     };
   }]);
 
