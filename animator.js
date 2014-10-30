@@ -2,8 +2,7 @@
 TODO:
 6. Testing.
 14. Add meta generator or link to saved file.
-15. Find all TODO's in code, sample.json, etc.
-17. Do about/help tab.
+15. Find all TODO's in code, html, sample.json, etc.
 18. Add images and get copyright clearance.
 19. Do gh-pages.
 */
