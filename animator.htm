@@ -44,6 +44,8 @@
     left: 2.5em;
     opacity: 0.7;
     padding-left: 2px;
+    max-height: 500px;
+    overflow: auto;
   }
 
   a.create-item
@@ -499,10 +501,10 @@
 TODO:
 5. Split js to separate file.
 6. Testing.
-13. Make sure scroll of projects, scenes, etc works, when exceeding maximum height of page.
 14. Add meta generator or link to saved file.
 15. Find all TODO's in code.
 16. Load sample data.
+17. Deal with out of order keyframes.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
@@ -1086,8 +1088,11 @@ TODO:
 
         $.each(load.elements[scene.id], function(idx, elem) {
           save.kfData[elem.newId] = {};
-          save.kfData[elem.newId]['c'] = angular.copy(load.kfData[elem.id]['c']);
-          save.kfData[elem.newId]['c'].id = uuid4.generate();
+
+          if (load.kfData[elem.id]['c']) {
+            save.kfData[elem.newId]['c'] = angular.copy(load.kfData[elem.id]['c']);
+            save.kfData[elem.newId]['c'].id = uuid4.generate();
+          }
 
           $.each(load.keyframes[scene.id], function(idx, kf) {
             if (load.kfData[elem.id] && load.kfData[elem.id][kf.id]) {
