@@ -556,8 +556,10 @@ TODO:
         /* Remove from the in-memory list of elements. */
         if ($scope.osaElements[sceneId]) {
          $.each($scope.osaElements[sceneId], function(idx, elem) {
-            if (elem.id == elemId)
+            if (elem.id == elemId) {
               $scope.osaElements[sceneId].splice(idx, 1);
+              return false;
+            }
          });
         }
 
@@ -572,8 +574,10 @@ TODO:
         /* Remove from the in-memory list of keyframes. */
         if ($scope.osaKeyframes[sceneId]) {
          $.each($scope.osaKeyframes[sceneId], function(idx, kf) {
-            if (kf.id == keyframeId)
+            if (kf.id == keyframeId) {
               $scope.osaKeyframes[sceneId].splice(idx, 1);
+              return false;
+            }
          });
         }
 
@@ -608,8 +612,10 @@ TODO:
          if ($scope.osaScenes[projectId])
          {
            $.each($scope.osaScenes[projectId], function(idx, scene) {
-             if (scene.id == sceneId)
+             if (scene.id == sceneId) {
                $scope.osaScenes[projectId].splice(idx, 1);
+               return false;
+             }
            });
          }
 
@@ -632,8 +638,10 @@ TODO:
       {
         /* Remove from memory list. */
         $.each($scope.osaProjects, function(idx, project) {
-          if (project.id == projectId)
+          if (project.id == projectId) {
             $scope.osaProjects.splice(idx, 1);
+            return false;
+          }
         });
       }
 
