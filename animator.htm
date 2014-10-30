@@ -504,12 +504,11 @@ TODO:
 14. Add meta generator or link to saved file.
 15. Find all TODO's in code.
 16. Load sample data.
-17. Deal with out of order keyframes.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
 
-  app.controller('osaController', ['$scope', '$q', '$localForage', 'uuid4', '$log', function($scope, $q, $localForage, uuid4, $log) {
+  app.controller('osaController', ['$scope', '$q', '$localForage', 'uuid4', '$filter', function($scope, $q, $localForage, uuid4, $filter) {
 
     $scope.osaProjects = [];
     $scope.osaScenes = {};              /* Keyed by project.id */
@@ -941,7 +940,9 @@ TODO:
 
           $scope.createConstants(elemDiv, $scope.osaElementKeyframeData[elem.id]['c'], stats);
 
-          $.each($scope.osaKeyframes[scene.id], function(idx, kf) {
+          var keyframesOrdered = $filter('orderBy')($scope.osaKeyframes[scene.id], function(dt) { return parseInt(dt.position); });
+
+          $.each(keyframesOrdered, function(idx, kf) {
             var kfData = $scope.osaElementKeyframeData[elem.id][kf.id];
             $scope.createDataAttribute(elemDiv, kfData, kf.position + sceneStart, stats);
             rollingScrollPosition = kf.position + sceneStart;
