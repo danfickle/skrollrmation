@@ -386,8 +386,8 @@
   <div class="tab-pane" id="collaborate-menu-tab">
   <div id="collaborate-menu">
    <table class="table">   
-    <tr ng-show="currentProject"><td><input type="text" placeholder="Save note" ng-model="saveNote"></td><td><button class="btn btn-xl btn-primary" ng-click="saveJSON()">Save to JSON format</button></td></tr>
-    <tr><td><input type="file" id="load-file-box"></td><td><button class="btn btn-xl btn-primary" ng-click="loadJSON()">Load from JSON format</button></td></tr>
+    <tr ng-show="currentProject"><td><input type="text" placeholder="Save note" ng-model="saveNote"></td><td><button class="btn btn-xl btn-primary" ng-click="saveJSON()"><span class="glyphicon glyphicon-floppy-disk"></span> Save to JSON format</button></td></tr>
+    <tr><td><input type="file" id="load-file-box"></td><td><button class="btn btn-xl btn-primary" ng-click="loadJSON()"><span class="glyphicon glyphicon-hdd"></span> Load from JSON format</button></td></tr>
    </table>
   </div>
   </div><!-- End collaborate menu tab -->
@@ -504,6 +504,7 @@ TODO:
 14. Add meta generator or link to saved file.
 15. Find all TODO's in code.
 16. Load sample data.
+17. Do about/help tab.
 */
 
   var app = angular.module('openScrollAnimator', ['LocalForageModule', 'ui.sortable', 'uuid4']);
