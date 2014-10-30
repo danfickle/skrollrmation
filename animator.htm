@@ -845,6 +845,9 @@ TODO:
       var transforms = '';
       var dataAttr = '';
 
+      if (!kfData)
+        return;
+
       $.each($scope.tags, function(idx, item) {
         if (kfData.hasData[item.name]) {
          if (!item.isTransform) {
@@ -870,7 +873,10 @@ TODO:
     /* Create the constant attributes and css for an img in the skrollr scene. */
     $scope.createConstants = function(elemDiv, kfData, stats) {
       var transforms = '';
- 
+
+      if (!kfData)
+        return;
+
       $.each($scope.allTags, function(idx, item) {
          if (kfData.hasData[item.name]) {
             var key = item.name;
