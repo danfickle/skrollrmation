@@ -2,17 +2,18 @@
 <html ng-app="openScrollAnimator" ng-controller="osaController">
 <head>
  <title>Easy Skrollr Animate</title>
- <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
- <link rel="stylesheet" type="text/css" href="third-party/sweet-alert.css">
- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
- <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
- <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
 
+ <link rel="stylesheet" type="text/css" href="third-party/bs/css/bootstrap.min.css">
+ <link rel="stylesheet" type="text/css" href="third-party/sweet-alert.css">
+
+ <script src="third-party/jquery.min.js"></script>
+ <script src="third-party/jquery-ui.min.js"></script>
+ <script src="third-party/angular.min.js"></script>
  <script src="third-party/localforage.min.js"></script>
  <script src="third-party/angular-localForage.min.js"></script>
- <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
- <script src="third-party/sortable.js"></script>
- <script src="third-party/angular-uuid4.js"></script>
+ <script src="third-party/bs/js/bootstrap.min.js"></script>
+ <script src="third-party/sortable.min.js"></script>
+ <script src="third-party/angular-uuid4.min.js"></script>
  <script src="third-party/skrollr.min.js"></script>
  <script src="third-party/sweet-alert.min.js"></script>
  <script src="third-party/FileSaver.min.js"></script>
@@ -380,7 +381,6 @@
       <tr class="success" ng-hide="osaErrors.length"><td colspan="4">No errors at last render!</td></tr>
     </tbody>
   </table>
-  </ul>
   </div>
   </div><!-- End error menu tab -->
 
@@ -399,7 +399,6 @@
   <p><i>Easy Skrollr Animate</i> is a free open-source project licensed under the MIT license.</p>
   <p>Please feel free to distribute it or use it in anyway that abides by the terms of the license.</p>
   <p><strong>Finally, please enjoy!</strong></p>
-  </p>
   <ul>
    <li><a href="TODO">Launch page &amp; tutorial</a></li>
    <li><a href="TODO">View project on Github</a></li>
@@ -503,7 +502,7 @@
  <div id="current-scene" ng-hide="renderMode">
   <img ng-repeat="elem in osaElements[currentScene.id]" id="{{elem.id}}">
  </div>
-
+</div>
  <div id="skrollr-container" ng-show="renderMode"></div>
 
 <script src="animator.js"></script>

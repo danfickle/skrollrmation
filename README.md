@@ -1,15 +1,19 @@
 Easy Skrollr Animate
 ====================
-TODO blurb here.
+**Easy Skrollr Animate** is a single page web-app to create on-scroll image animations using skrollr.js.
+Licensed under the MIT license. Please enjoy!
 
-+ [http://TODO](Launch page and tutorial)
++ [http://TODO](Web-app)
++ [tutorial.md](Tutorial)
 + [http://TODO](Demo animation)
 
 Features
 --------
 + Possible for non-developers to use.
++ Live view of keyframes as you edit properties.
 + Client side single page app. No server code required.
 + Animate image properties such as position, size, opacity and transforms.
++ Automatically saves progress to browser.
 + Easy for developers to add additional properties to animate.
 + Output to HTML document.
 + Save and load to/from JSON for collaboration with others.
@@ -29,4 +33,8 @@ Built with
 + [https://github.com/eligrey/FileSaver.js/](FileSaver)
 + [http://lipis.github.io/bootstrap-sweetalert/](bootstrap-sweet-alert)
 
+Dependencies
+------------
+Dependencies are managed with bower.
+Additionally, a grunt task is run to copy the needed javascript and css to the third-party folder.
 
