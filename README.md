@@ -1,3 +1,5 @@
+![Skrollrmation logo](http://danfickle.github.io/skrollrmation/skrollrmation.png)
+
 Skrollrmation
 =============
 **Skrollrmation** is a single page web-app to create on-scroll image animations using skrollr.js.
