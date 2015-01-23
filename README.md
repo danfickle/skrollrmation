@@ -1,11 +1,10 @@
-Easy Skrollr Animate
-====================
-**Easy Skrollr Animate** is a single page web-app to create on-scroll image animations using skrollr.js.
+Skrollrmation
+=============
+**Skrollrmation** is a single page web-app to create on-scroll image animations using skrollr.js.
 Licensed under the MIT license. Please enjoy!
 
-+ [http://TODO](Web-app)
-+ [tutorial.md](Tutorial)
-+ [http://TODO](Demo animation)
++ [http://TODO](Skrollrmation Web-app)
++ [http://concatenate.com.au](Demo animation: Concatenate Web Development)
 
 Features
 --------
