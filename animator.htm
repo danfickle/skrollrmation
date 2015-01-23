@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html ng-app="openScrollAnimator" ng-controller="osaController">
+<head>
+ <title>Skrollrmation</title>
+
+ <link rel="stylesheet" type="text/css" href="third-party/bs/css/bootstrap.min.css">
+ <link rel="stylesheet" type="text/css" href="third-party/sweet-alert.css">
+
+ <script src="third-party/jquery.min.js"></script>
+ <script src="third-party/jquery-ui.min.js"></script>
+ <script src="third-party/angular.min.js"></script>
+ <script src="third-party/localforage.min.js"></script>
+ <script src="third-party/angular-localForage.min.js"></script>
+ <script src="third-party/bs/js/bootstrap.min.js"></script>
+ <script src="third-party/sortable.min.js"></script>
+ <script src="third-party/angular-uuid4.min.js"></script>
+ <script src="third-party/skrollr.min.js"></script>
+ <script src="third-party/sweet-alert.min.js"></script>
+ <script src="third-party/FileSaver.min.js"></script>
+
+ <style>
+  div.project-header
+  {
+    position: fixed;
+    width: 2.5em;
+    height: 100%;
+    background-image: linear-gradient(to right, white, gray);
+    padding: 5px;
+    opacity: 0.7;
+  }
+
+  div.project-header h2
+  {
+    transform: rotate(90deg);
+    width: 100%;
+    white-space: nowrap;
+    transform-origin: left bottom 0;
+    font-size: 1.4em;
+  }
+
+  #controls-main
+  {
+    position:fixed;
+    top:0;
+    left: 2.5em;
+    opacity: 0.7;
+    padding-left: 2px;
+    max-height: 500px;
+    overflow: auto;
+  }
+
+  a.create-item
+  {
+    font-size: 85%;
+    color: rgb(128, 10, 20);
+  }
+
+  #element-keyframe
+  {
+    overflow-x: scroll;
+    overflow-y: scroll;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 2.5em;
+    min-height: 200px;
+    white-space: nowrap;
+    opacity: 0.7;
+  }
+
+  h4.rot90
+  {
+    transform: rotate(90deg);
+    width: 100%;
+    white-space: nowrap;
+    transform-origin: left bottom 0;
+    font-size: 1.1em;
+    padding-left: 5px;
+    padding-bottom: 3px;
+  }
+
+  div.kf-data
+  {
+    display: inline-block;
+    border: 0px solid gray;
+    height: 100%;
+    margin: 0 2px 0 2px;
+    width: 2em;
+  }
+
+  h4.kf-data-expanded
+  {
+    transform: none !important;
+    white-space: normal;
+  }
+
+  div.kf-data-expanded
+  {
+    width: 12em !important;
+    border: 1px solid gray !important;
+  }
+
+  div.kf-data-expanded > div
+  {
+    white-space: normal;
+  }
+
+  .actual-data
+  {
+   display:table-cell;
+   padding: 5px;
+  }
+
+  .tag-cloud a
+  {
+    font-size: 85%;
+    color: rgb(128, 10, 20);
+  }
+
+  .actual-data p
+  {
+    font-size: 85%;
+    margin: 0 2px 0 0;
+  }
+
+  span.highlight
+  {
+    color: red !important;
+  }
+
+  span.handle
+  {
+    cursor:move;
+  }
+
+  .nowrap-cls
+  {
+    white-space: nowrap;
+  }
+
+  .ptr-cursor
+  {
+    cursor:pointer;
+  }
+
+  .kf-data-item-cls
+  {
+    width: 80%;
+  }
+
+  .destroy-data
+  {
+    cursor: pointer;
+    font-size: 110%;
+  }
+
+  #current-scene, #skrollr-container
+  {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+  #current-scene img
+  {
+    position: absolute;
+  }
+ </style>
+</head>
+
+<body>
+
+<div ng-cloak>
+ <div class="project-header">
+  <h2>
+  <button ng-click="renderSkrollr()" ng-show="currentProject && !renderMode" class="btn btn-primary btn-xs">
+   <span class="glyphicon glyphicon-picture"></span> Render
+  </button>
+
+  <button ng-click="renderMode = false" ng-show="renderMode" class="btn btn-primary btn-xs">
+   <span class="glyphicon glyphicon-edit"></span> Edit
+  </button>
+
+  <button ng-click="showErrorsTab()" ng-show="osaErrors.length && renderMode" class="btn btn-danger btn-xs">
+   <span class="glyphicon glyphicon-warning-sign"></span> Errors
+  </button>
+
+  <button ng-click="saveRender()" ng-show="renderMode" class="btn btn-primary btn-xs">
+   <span class="glyphicon glyphicon-floppy-disk"></span> Save
+  </button>
+
+  <span ng-show="currentProject">{{currentProject.name}}</span>
+  <span ng-hide="currentProject">No project open</span>
+  <span ng-show="currentScene">&gt; {{currentScene.name}}</span>
+  <span ng-show="currentElement">&gt; {{currentElement.name}}</span>
+  </h2>
+ </div>
+
+ <div id="controls-main" ng-hide="renderMode">
+
+ <ul class="nav nav-tabs" role="tablist">
+
+  <li class="active">
+   <a href="#project-menu-tab" role="tab" data-toggle="tab">
+    Projects <span class="badge">{{osaProjects.length}}</span>
+   </a>
+  </li>
+
+  <li>
+   <a href="#scene-menu-tab" role="tab" data-toggle="tab">
+    Scenes <span class="badge">{{currentProject ? osaScenes[currentProject.id].length : 0}}
+   </a>
+  </li>
+
+  <li>
+   <a href="#keyframe-menu-tab" role="tab" data-toggle="tab">
+    Keyframes <span class="badge">{{currentScene ? osaKeyframes[currentScene.id].length : 0}}</span>
+   </a>
+  </li>
+
+  <li>
+   <a href="#element-menu-tab" role="tab" data-toggle="tab">
+    Images <span class="badge">{{currentScene ? osaElements[currentScene.id].length : 0}}</span>
+   </a>
+  </li>
+
+  <li>
+   <a href="#error-menu-tab" role="tab" data-toggle="tab">
+    Errors <span class="badge">{{osaErrors.length}}</span>
+   </a>
+  </li>
+
+  <li>
+   <a href="#collaborate-menu-tab" role="tab" data-toggle="tab">
+    Collaborate
+   </a>
+  </li>
+
+  <li>
+   <a href="#about-menu-tab" role="tab" data-toggle="tab">
+    About / Help
+   </a>
+  </li>
+
+ </ul>
+
+ <div class="tab-content">
+
+ <div class="tab-pane active" id="project-menu-tab">
+
+ <div id="project-menu">
+
+  <table class="table table-condensed table-bordered table-striped">
+
+  <tbody>
+    <tr><th>Order</th><th>Name</th><th>Load</th><th>Delete</th></tr>
+  </tbody>
+
+  <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaProjects">
+   <tr ng-repeat="pject in osaProjects">
+     <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><input type="text" ng-model="pject.name" placeholder="Project Name"></td>
+     <td><button class="btn btn-sm"
+                 ng-class="{ 'btn-success' : pject.id === currentProject.id, 'btn-primary' : pject.id !== currentProject.id }"
+                 ng-click="loadProject(pject)">Load</button></td>
+     <td><button class="btn btn-sm btn-danger" ng-click="deleteProject($index, pject.id)">Delete</button></td>
+   </tr>
+  </tbody>
+
+  <tbody>
+    <tr><td colspan="4"><a href="#" class="create-item" ng-click="createProject()">Create project here</a></td></tr>
+  </tbody>
+  </table>
+ </div>
+
+ </div><!-- End project menu tab -->
+
+  <div class="tab-pane" id="scene-menu-tab">
+
+  <div id="scene-menu">
+
+  <table class="table table-condensed table-bordered table-striped">
+
+  <tbody>
+    <tr><th>Order</th><th>Name</th><th>Load</th><th>Delete</th></tr>
+  </tbody>
+
+  <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaScenes[currentProject.id]">
+   <tr ng-repeat="scene in osaScenes[currentProject.id]">
+     <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><input type="text" ng-model="scene.name" placeholder="Scene Name"></td>
+     <td><button class="btn btn-sm"
+                 ng-class="{ 'btn-success' : scene.id === currentScene.id, 'btn-primary' : scene.id !== currentScene.id }"
+                 ng-click="loadScene(scene)">Load</button></td>
+     <td><button class="btn btn-sm btn-danger" ng-click="deleteScene($index, scene.id)">Delete</button></td>
+   </tr>
+  </tbody>
+
+  <tbody>
+    <tr ng-show="currentProject"><td colspan="4"><a href="#" class="create-item" ng-click="createScene()">Create scene here</a></td></tr>
+    <tr ng-hide="currentProject"><td colspan="4">Please load a project to view &amp; create scenes</td></tr>
+  </tbody>
+  </table>
+ </div>
+
+  </div><!-- End scene menu tab -->
+
+  <div class="tab-pane" id="keyframe-menu-tab">
+
+  <div id="keyframe-menu">
+
+  <table class="table table-condensed table-bordered table-striped">
+
+  <tbody>
+    <tr><th>Order</th><th>Name</th><th>Position</th><th>Delete</th></tr>
+  </tbody>
+
+  <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaKeyframes[currentScene.id]">
+   <tr ng-repeat="kf in osaKeyframes[currentScene.id]">
+     <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><input type="text" ng-model="kf.name" placeholder="Keyframe name"></td>
+     <td><input type="number" min="0" ng-model="kf.position" placeholder="Keyframe scroll position"></td>
+     <td><button class="btn btn-sm btn-danger" ng-click="deleteKeyframe($index, kf.id)">Delete</button></td>
+   </tr>
+  </tbody>
+
+  <tbody>
+    <tr ng-show="currentScene"><td colspan="4"><a href="#" class="create-item" ng-click="createKeyframe()">Create keyframe here</a></td></tr>
+    <tr ng-hide="currentScene"><td colspan="4">Please load a scene to view &amp; create keyframes</td></tr>
+  </tbody>
+  </table>
+ </div>
+
+  </div><!-- End keyframe menu tab -->
+
+  <div class="tab-pane" id="element-menu-tab">
+
+  <div id="element-menu">
+
+  <table class="table table-condensed table-bordered table-striped">
+
+  <tbody>
+    <tr><th>Order</th><th>Name</th><th>Load</th><th>Delete</th></tr>
+  </tbody>
+
+  <tbody ui-sortable="{ handle : '.handle' }" ng-model="osaElements[currentScene.id]">
+   <tr ng-repeat="elem in osaElements[currentScene.id]">
+     <td><span class="handle"><span class="glyphicon glyphicon-sort"></span></span></td>
+     <td><input type="text" ng-model="elem.name" placeholder="Image name"></td>
+     <td><button class="btn btn-sm"
+                 ng-class="{ 'btn-success' : elem.id === currentElement.id, 'btn-primary' : elem.id !== currentElemnent.id }"
+                 ng-click="loadElement(elem)">Load</button></td>
+     <td><button class="btn btn-sm btn-danger" ng-click="deleteElement($index, elem.id)">Delete</button></td>
+   </tr>
+  </tbody>
+
+  <tbody>
+    <tr ng-show="currentScene"><td colspan="4"><a href="#" class="create-item" ng-click="createElement()">Create image here</a></td></tr>
+    <tr ng-hide="currentScene"><td colspan="4">Please load a scene to view &amp; create images</td></tr>
+  </tbody>
+  </table>
+ </div>
+
+  </div><!-- End element menu tab -->
+
+  <div class="tab-pane" id="error-menu-tab">
+  <div id="error-menu">
+  <table class="table table-condensed table-bordered table-striped">
+    <tbody>
+     <tr><th>Error</th><th>Property</th><th>Element</th><th>Scene</th></tr>
+    </tbody>
+
+    <tbody>
+      <tr class="danger" ng-repeat="err in osaErrors"><td>{{err.text}}</td><td>{{err.tag}}</td><td>{{err.element}}</td><td>{{err.scene}}</td></tr>
+    </tbody>
+
+    <tbody>
+      <tr class="success" ng-hide="osaErrors.length"><td colspan="4">No errors at last render!</td></tr>
+    </tbody>
+  </table>
+  </div>
+  </div><!-- End error menu tab -->
+
+  <div class="tab-pane" id="collaborate-menu-tab">
+  <div id="collaborate-menu">
+   <table class="table">   
+    <tr ng-show="currentProject"><td><input type="text" placeholder="Save note" ng-model="saveNote"></td><td><button class="btn btn-xl btn-primary" ng-click="saveJSON()"><span class="glyphicon glyphicon-floppy-disk"></span> Save to JSON format</button></td></tr>
+    <tr><td><input type="file" id="load-file-box"></td><td><button class="btn btn-xl btn-primary" ng-click="loadJSON()"><span class="glyphicon glyphicon-hdd"></span> Load from JSON format</button></td></tr>
+    <tr><td>&nbsp;</td><td><button class="btn btn-xl btn-primary" ng-disabled="loadingData" ng-click="loadSample()"><span class="glyphicon glyphicon-hdd"></span> Load sample project</button></td></tr>
+   </table>
+  </div>
+  </div><!-- End collaborate menu tab -->
+
+  <div class="tab-pane" id="about-menu-tab">
+  <div id="about-menu">
+  <p><i>Skrollrmation</i> is a free open-source project licensed under the MIT license.</p>
+  <p>Please feel free to distribute it or use it in anyway that abides by the terms of the license.</p>
+  <p><strong>Finally, please enjoy!</strong></p>
+  <ul>
+   <li><a href="TODO">View project on Github</a></li>
+   <li><a href="TODO">Issues &amp; bugs</a></li>
+  </ul>
+  </div>
+  </div><!-- End about menu tab -->
+
+</div><!-- End tab content -->
+</div><!-- End controls-main -->
+
+<div id="element-keyframe" ng-show="currentElement && !renderMode">
+ <div class="kf-data" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id]['c'].isOpen }">
+
+  <h4 class="rot90" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id]['c'].isOpen }">
+    <span ng-click="applyStyles('c')" ng-class="{ highlight : currentKeyframeId == 'c' }" class="glyphicon glyphicon-search ptr-cursor"></span>
+    <a href="#" ng-click="createData('c')">Constants</a>
+  </h4>
+
+  <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id]['c'].isOpen">
+   <span class="tag-cloud">
+     <span ng-repeat="tag in tags">
+     <a ng-hide="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]"
+        ng-click="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name] = true"
+        href="#">{{tag.name}}</a>
+     </span>
+     <span ng-repeat="tag in constants">
+     <a ng-hide="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]"
+        ng-click="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name] = true"
+        href="#">{{tag.name}}</a>
+     </span>
+   </span>
+
+   <span ng-repeat="tag in tags">
+     <p ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">{{tag.placeholder}}</p>
+     <p class="nowrap-cls" ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">
+
+        <input class="kf-data-item-cls"
+               type="number"
+               min="{{tag.min}}"
+               max="{{tag.max}}"
+               step="{{tag.step ? tag.step : 1}}"
+               ng-model="osaElementKeyframeData[currentElement.id]['c'][tag.name]"
+               placeholder="{{tag.placeholder}}"
+               ng-change="applyStyles('c')">
+
+        <span class="destroy-data" ng-click="destroyData('c', tag)">&times;</span>
+     </p>
+   </span>
+   <span ng-repeat="tag in constants">
+     <p ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">{{tag.placeholder}}</p>
+     <p class="nowrap-cls" ng-show="osaElementKeyframeData[currentElement.id]['c'].hasData[tag.name]">
+
+        <input class="kf-data-item-cls"
+               type="text"
+               ng-model="osaElementKeyframeData[currentElement.id]['c'][tag.name]"
+               placeholder="{{tag.placeholder}}"
+               ng-blur="applyStyles('c')">
+
+        <span class="destroy-data" ng-click="destroyData('c', tag)">&times;</span>
+     </p>
+   </span>
+  </div>
+ </div><!-- End kf-data item -->
+
+ <div class="kf-data" ng-repeat="kf in osaKeyframes[currentScene.id]" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id][kf.id].isOpen }">
+
+  <h4 class="rot90" ng-class="{ 'kf-data-expanded' : osaElementKeyframeData[currentElement.id][kf.id].isOpen }">
+    <span ng-click="applyStyles(kf.id)" ng-class="{ highlight : currentKeyframeId == kf.id }" class="glyphicon glyphicon-search ptr-cursor"></span>
+    <a href="#" ng-click="createData(kf.id)">{{kf.name}} @ {{kf.position}}</a>
+  </h4>
+
+  <div class="actual-data" ng-show="osaElementKeyframeData[currentElement.id][kf.id].isOpen">
+   <span class="tag-cloud">
+     <span ng-repeat="tag in tags">
+     <a ng-hide="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]"
+        ng-click="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name] = true"
+        href="#">{{tag.name}}</a>
+     </span>
+   </span>
+
+   <span ng-repeat="tag in tags">
+     <p ng-show="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]">{{tag.placeholder}}</p>
+     <p class="nowrap-cls" ng-show="osaElementKeyframeData[currentElement.id][kf.id].hasData[tag.name]">
+       <input class="kf-data-item-cls"
+              type="number"
+              min="{{tag.min}}"
+              max="{{tag.max}}"
+              step="{{tag.step ? tag.step : 1}}"
+              ng-model="osaElementKeyframeData[currentElement.id][kf.id][tag.name]"
+              placeholder="{{tag.placeholder}}"
+              ng-change="applyStyles(kf.id)">
+
+       <span class="destroy-data" ng-click="destroyData(kf.id, tag)">&times;</span>
+     </p>
+   </span>
+  </div>
+ </div><!-- End kf-data item -->
+</div><!-- End element-keyframe content -->
+
+ <div id="current-scene" ng-hide="renderMode">
+  <img ng-repeat="elem in osaElements[currentScene.id]" id="{{elem.id}}">
+ </div>
+</div>
+ <div id="skrollr-container" ng-show="renderMode"></div>
+
+<script src="animator.js"></script>
+</body>
+</html>
+
