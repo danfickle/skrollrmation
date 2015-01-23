@@ -3,8 +3,8 @@ Skrollrmation
 **Skrollrmation** is a single page web-app to create on-scroll image animations using skrollr.js.
 Licensed under the MIT license. Please enjoy!
 
-+ [http://TODO](Skrollrmation Web-app)
-+ [http://concatenate.com.au](Demo animation: Concatenate Web Development)
++ [Skrollrmation Web-app](http://TODO)
++ [Demo animation: Concatenate Web Development](http://concatenate.com.au)
 
 Features
 --------
@@ -20,17 +20,17 @@ Features
 
 Built with
 ----------
-+ [https://github.com/Prinzhorn/skrollr](skrollr.js)
-+ [https://angularjs.org/](angularJS)
-+ [https://github.com/mozilla/localForage](localForage)
-+ [https://github.com/ocombe/angular-localForage](angular-localForage)
-+ [http://getbootstrap.com/](bootstrap)
-+ [http://jquery.com/](jquery)
-+ [http://jqueryui.com/](jquery-ui)
-+ [https://github.com/angular-ui/ui-sortable](ui-sortable for angularJS)
-+ [https://github.com/monicao/angular-uuid4](angular-uuid4)
-+ [https://github.com/eligrey/FileSaver.js/](FileSaver)
-+ [http://lipis.github.io/bootstrap-sweetalert/](bootstrap-sweet-alert)
++ [skrollr.js](https://github.com/Prinzhorn/skrollr)
++ [angularJS](https://angularjs.org/)
++ [localForage](https://github.com/mozilla/localForage)
++ [angular-localForage](https://github.com/ocombe/angular-localForage)
++ [bootstrap](http://getbootstrap.com/)
++ [jquery](http://jquery.com/)
++ [jquery-ui](http://jqueryui.com/)
++ [ui-sortable for angularJS](https://github.com/angular-ui/ui-sortable)
++ [angular-uuid4](https://github.com/monicao/angular-uuid4)
++ [FileSaver](https://github.com/eligrey/FileSaver.js/)
++ [bootstrap-sweet-alert](http://lipis.github.io/bootstrap-sweetalert/)
 
 Dependencies
 ------------
