@@ -29,7 +29,7 @@
   "kfData":
   {
     "0014dc3e-5ac8-41bd-8ee7-c39beb88c402":
-       {"c":                                   {"id":"d4763950-a4b3-417a-8ca8-147313009e0c","hasData":{"alt":true,"src":true},"isOpen":true,"alt":"Person","src":"TODO"},
+       {"c":                                   {"id":"d4763950-a4b3-417a-8ca8-147313009e0c","hasData":{"alt":true,"src":true},"isOpen":true,"alt":"Person","src":"http://danfickle.github.io/skrollrmation/skrollrmation.png"},
         "d38c5027-91f2-4ef5-c639-9fd1b24227aa":{"id":"99a06b8a-4829-4b4e-9a8c-70cf2193d8be","hasData":{"top":true,"left":true,"rotate":true},"isOpen":true,"top":10,"left":10,"rotate":0},
         "0c6b68ce-4eb1-4380-fa4e-b0224042f939":{"id":"b678777d-0010-4103-a994-530b5dec5e01","hasData":{"top":true,"left":true,"rotate":true},"isOpen":true,"top":300,"left":400,"rotate":360}}
   },
